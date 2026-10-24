@@ -1,6 +1,6 @@
 // Service worker: rende l'app utilizzabile anche offline.
-const CACHE = 'armadio-v2';
-const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon.svg'];
+const CACHE = 'armadio-v3';
+const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon.svg', 'icon-w.svg', 'icon-m.svg', 'icon-x.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));

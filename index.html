@@ -7,20 +7,24 @@
   <meta name="description" content="Armadio digitale: fotografa e organizza i tuoi vestiti.">
   <meta name="theme-color" content="#1f1b24">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="icon" id="favicon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" id="touchIcon" href="icon.svg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-row">
-      <div>
-        <h1>Il mio Armadio</h1>
-        <p id="greeting" class="greeting" hidden></p>
+      <div class="brand">
+        <img id="logo" class="logo" src="icon.svg" alt="">
+        <div>
+          <h1 id="pageTitle">Il mio Armadio</h1>
+          <p id="greeting" class="greeting" hidden></p>
+        </div>
       </div>
       <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
     </div>
+    <div id="wardrobeTools">
     <input id="search" type="search" placeholder="Cerca per nome, marca, tag…" autocomplete="off">
     <nav id="categoryChips" class="chips" aria-label="Categorie"></nav>
     <div class="filters">
@@ -34,19 +38,42 @@
       </select>
       <button id="favFilter" class="toggle" aria-pressed="false" title="Solo preferiti">♡</button>
     </div>
+    </div>
   </header>
 
   <main>
-    <p id="stats" class="stats"></p>
-    <section id="grid" class="grid" aria-live="polite"></section>
-    <div id="empty" class="empty" hidden>
-      <div class="empty-emoji">👗</div>
-      <p>Il tuo armadio è vuoto.</p>
-      <p class="muted">Tocca <strong>+</strong> per aggiungere il primo capo.</p>
+    <div id="wardrobeView">
+      <p id="stats" class="stats"></p>
+      <section id="grid" class="grid" aria-live="polite"></section>
+      <div id="empty" class="empty" hidden>
+        <img class="empty-icon" src="icon.svg" alt="">
+        <p>Il tuo armadio è vuoto.</p>
+        <p class="muted">Tocca <strong>+</strong> per aggiungere il primo capo.</p>
+      </div>
+    </div>
+
+    <div id="outfitView" hidden>
+      <div class="outfit-controls">
+        <label>Occasione
+          <select id="occasionSel"></select>
+        </label>
+        <label>Stagione
+          <select id="seasonSel"></select>
+        </label>
+      </div>
+      <button id="generateBtn" class="btn primary wide">✨ Genera outfit</button>
+      <div id="outfitResult" aria-live="polite"></div>
+      <h2 class="spaced">Outfit salvati</h2>
+      <div id="savedOutfits"></div>
     </div>
   </main>
 
   <button id="addBtn" class="fab" aria-label="Aggiungi capo">+</button>
+
+  <nav class="tabbar" aria-label="Sezioni">
+    <button class="tab" data-view="wardrobe" aria-current="page"><span>🗂️</span>Armadio</button>
+    <button class="tab" data-view="outfit"><span>✨</span>Outfit</button>
+  </nav>
 
   <!-- Aggiungi / modifica capo -->
   <dialog id="itemDialog">
@@ -155,7 +182,7 @@
 
       <section class="step" data-step="1">
         <h2>Per chi è questo armadio?</h2>
-        <p class="muted">Adattiamo categorie e taglie.</p>
+        <p class="muted">Adattiamo categorie, taglie e outfit. L'icona scelta diventa l'icona della tua app.</p>
         <div class="options big" id="genderOptions"></div>
       </section>
 

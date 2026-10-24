@@ -302,3 +302,73 @@ legend { padding: 0; margin-bottom: 6px; }
 
 .wiz-actions { margin-top: 20px; }
 .wiz-actions #wizBack { margin-right: auto; }
+
+/* ---------- Navigazione e logo ---------- */
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { margin-bottom: 2px; }
+.logo { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.greeting { margin: 0 0 8px; }
+.empty-icon { width: 88px; height: 88px; border-radius: 22px; }
+
+body { padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
+.fab { bottom: calc(84px + env(safe-area-inset-bottom)); }
+.toast { bottom: calc(160px + env(safe-area-inset-bottom)); }
+
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+  display: flex; background: var(--surface); border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab {
+  flex: 1; border: none; background: none; padding: 8px 0 10px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 0.8rem; color: var(--muted);
+}
+.tab span { font-size: 1.3rem; }
+.tab[aria-current="page"] { color: var(--accent); font-weight: 600; }
+
+/* ---------- Outfit ---------- */
+.outfit-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 12px; }
+.outfit-controls label { font-size: 0.9rem; color: var(--muted); }
+.outfit-controls select { margin-top: 4px; color: var(--text); }
+.btn.wide { width: 100%; padding: 14px; font-size: 1.05rem; }
+
+.outfit {
+  margin-top: 16px; background: var(--surface); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 14px;
+}
+.outfit-pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+.piece {
+  position: relative; border: 2px solid transparent; border-radius: 12px; overflow: hidden;
+  background: var(--bg); padding: 0; cursor: pointer; text-align: left;
+}
+.piece.locked { border-color: var(--accent); }
+.piece img, .piece .noimg {
+  width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: grid; place-items: center;
+  font-size: 2rem; background: var(--border);
+}
+.piece-body { padding: 6px 8px 8px; font-size: 0.8rem; }
+.piece-cat { color: var(--muted); font-size: 0.72rem; }
+.piece-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.piece-lock {
+  position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,.5); color: #fff;
+  border-radius: 999px; width: 26px; height: 26px; display: grid; place-items: center; font-size: 0.8rem;
+}
+.outfit-why { color: var(--muted); font-size: 0.85rem; margin: 12px 0 0; }
+.outfit-hint { color: var(--muted); font-size: 0.8rem; margin: 4px 0 0; }
+.outfit .actions { margin-top: 12px; justify-content: stretch; }
+.outfit .actions .btn { flex: 1; padding: 10px 8px; font-size: 0.9rem; }
+
+.saved { display: grid; gap: 10px; }
+.saved-row {
+  display: flex; align-items: center; gap: 10px; background: var(--surface);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px;
+}
+.saved-thumbs { display: flex; gap: 4px; flex: 1; overflow: hidden; cursor: pointer; border: none; background: none; padding: 0; }
+.saved-thumbs img, .saved-thumbs .noimg {
+  width: 44px; height: 58px; object-fit: cover; border-radius: 8px; flex: none;
+  background: var(--border); display: grid; place-items: center; font-size: 1.2rem;
+}
+.saved-meta { font-size: 0.8rem; color: var(--muted); text-align: right; flex: none; }
+.saved-meta .btn { margin-top: 4px; }
+.options .opt-icon { width: 44px; height: 44px; border-radius: 12px; }

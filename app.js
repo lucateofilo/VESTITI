@@ -42,9 +42,9 @@ const SEASONS = [
 ];
 
 const GENDERS = [
-  { id: 'w', label: 'Donna', emoji: '👩' },
-  { id: 'm', label: 'Uomo', emoji: '👨' },
-  { id: 'x', label: 'Entrambi / Unisex', emoji: '🧑' },
+  { id: 'w', label: 'Donna', emoji: '👗', icon: 'icon-w.svg' },
+  { id: 'm', label: 'Uomo', emoji: '👔', icon: 'icon-m.svg' },
+  { id: 'x', label: 'Entrambi / Unisex', emoji: '👕', icon: 'icon-x.svg' },
 ];
 
 const STYLES = [
@@ -134,11 +134,16 @@ function visibleCategories() {
 // ---------- Database (IndexedDB, tutto resta sul dispositivo) ----------
 const DB_NAME = 'armadio';
 const STORE = 'items';
+const OUTFITS = 'outfits';
 
 function openDb() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: 'id' });
+    const req = indexedDB.open(DB_NAME, 2);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE, { keyPath: 'id' });
+      if (!d.objectStoreNames.contains(OUTFITS)) d.createObjectStore(OUTFITS, { keyPath: 'id' });
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
@@ -146,12 +151,11 @@ function openDb() {
 
 const dbPromise = openDb();
 
-async function tx(mode, fn) {
-  const db = await dbPromise;
+async function tx(storeName, mode, fn) {
+  const database = await dbPromise;
   return new Promise((resolve, reject) => {
-    const t = db.transaction(STORE, mode);
-    const store = t.objectStore(STORE);
-    const result = fn(store);
+    const t = database.transaction(storeName, mode);
+    const result = fn(t.objectStore(storeName));
     t.oncomplete = () => resolve(result && 'result' in result ? result.result : undefined);
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);
@@ -159,9 +163,12 @@ async function tx(mode, fn) {
 }
 
 const db = {
-  all: () => tx('readonly', s => s.getAll()),
-  put: item => tx('readwrite', s => s.put(item)),
-  remove: id => tx('readwrite', s => s.delete(id)),
+  all: () => tx(STORE, 'readonly', s => s.getAll()),
+  put: item => tx(STORE, 'readwrite', s => s.put(item)),
+  remove: id => tx(STORE, 'readwrite', s => s.delete(id)),
+  allOutfits: () => tx(OUTFITS, 'readonly', s => s.getAll()),
+  putOutfit: o => tx(OUTFITS, 'readwrite', s => s.put(o)),
+  removeOutfit: id => tx(OUTFITS, 'readwrite', s => s.delete(id)),
 };
 
 // ---------- Stato ----------
@@ -176,6 +183,11 @@ const state = {
   editingId: null,
   pendingPhoto: undefined, // Blob nuovo scelto nel form (undefined = nessun cambio)
   detailId: null,
+  view: 'wardrobe',
+  outfits: [],      // outfit salvati
+  current: null,    // outfit generato: { pieces: [{slot, id}], occasion, season }
+  locked: new Set(),
+  lastSig: '',
 };
 
 const urlCache = new Map(); // id -> objectURL della foto
@@ -335,6 +347,18 @@ function renderGrid() {
   }
 }
 
+function profileIcon() {
+  return genderById[profile.gender]?.icon || 'icon.svg';
+}
+
+function renderIcons() {
+  const icon = profileIcon();
+  $('#logo').src = icon;
+  $('#favicon').href = icon;
+  $('#touchIcon').href = icon;
+  document.querySelectorAll('.empty-icon').forEach(i => { i.src = icon; });
+}
+
 function renderGreeting() {
   const g = $('#greeting');
   g.hidden = !profile.name;
@@ -342,6 +366,7 @@ function renderGreeting() {
 }
 
 function render() {
+  renderIcons();
   renderGreeting();
   renderChips();
   renderGrid();
@@ -549,8 +574,10 @@ async function deleteCurrent() {
   state.items = state.items.filter(i => i.id !== it.id);
   const cached = urlCache.get(it.id);
   if (cached) { URL.revokeObjectURL(cached.url); urlCache.delete(it.id); }
+  state.locked.delete(it.id);
   $('#detailDialog').close();
   render();
+  renderOutfitView();
   toast('Capo eliminato');
 }
 
@@ -560,7 +587,7 @@ async function exportBackup() {
     const { photo, ...rest } = it;
     return { ...rest, photo: photo ? await blobToDataUrl(photo) : null };
   }));
-  const data = { app: 'armadio', version: 1, exportedAt: new Date().toISOString(), profile, items };
+  const data = { app: 'armadio', version: 1, exportedAt: new Date().toISOString(), profile, items, outfits: state.outfits };
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const a = el('a', {
     href: URL.createObjectURL(blob),
@@ -608,8 +635,16 @@ async function importBackup(e) {
       profile = cleanProfile(data.profile);
       saveProfile(profile);
     }
+    if (Array.isArray(data.outfits)) {
+      for (const o of data.outfits) {
+        if (!o || typeof o.id !== 'string' || !Array.isArray(o.pieces)) continue;
+        await db.putOutfit(cleanOutfit(o));
+      }
+      state.outfits = await db.allOutfits();
+    }
     state.items = await db.all();
     render();
+    renderOutfitView();
     $('#menuDialog').close();
     toast(`Importati ${added} capi`);
   } catch (err) {
@@ -626,7 +661,8 @@ let draft = null;
 function optionList(container, type, name, list, selected) {
   container.replaceChildren(...list.map(o => el('label', {},
     el('input', { type, name, value: o.id, checked: selected.includes(o.id) }),
-    o.hex ? swatch(o.id) : el('span', { class: 'opt-emoji' }, o.emoji),
+    o.icon ? el('img', { class: 'opt-icon', src: o.icon, alt: '' })
+      : o.hex ? swatch(o.id) : el('span', { class: 'opt-emoji' }, o.emoji),
     o.label,
   )));
 }
@@ -699,6 +735,7 @@ function finishProfile() {
   // Se la categoria selezionata non esiste più per questo profilo, torna a "Tutto"
   if (!wasMale && profile.gender === 'm' && state.category === 'dress' && !state.items.some(i => i.category === 'dress')) state.category = '';
   render();
+  renderOutfitView();
   toast(profile.name ? `Profilo salvato, ${profile.name}!` : 'Profilo salvato');
 }
 
@@ -735,6 +772,350 @@ function bindProfileEvents() {
   $('#menuBtn').addEventListener('click', renderProfileSummary);
   $('#itemForm').category.addEventListener('change', applyProfileSize);
   $('#itemForm').tags.addEventListener('input', renderTagSuggestions);
+}
+
+// ---------- Generatore di outfit ----------
+const NEUTRALS = new Set(['black', 'white', 'grey', 'beige', 'navy', 'brown']);
+
+// Stili che si addicono a ogni occasione
+const OCCASION_STYLES = {
+  'lavoro': ['business', 'classico', 'elegante', 'minimal', 'preppy'],
+  'università': ['casual', 'streetwear', 'preppy', 'minimal', 'sportivo'],
+  'tempo libero': ['casual', 'streetwear', 'boho', 'sportivo', 'vintage', 'minimal'],
+  'sport': ['sportivo'],
+  'serata': ['elegante', 'rock', 'streetwear', 'romantico', 'minimal'],
+  'cerimonia': ['elegante', 'classico', 'romantico'],
+  'viaggio': ['casual', 'sportivo', 'minimal'],
+  'appuntamento': ['elegante', 'romantico', 'casual', 'minimal'],
+};
+
+// Categorie poco adatte a un'occasione
+const OCCASION_AVOID = {
+  'sport': ['suit', 'shirt', 'dress'],
+  'cerimonia': [],
+  'lavoro': [],
+};
+
+const SLOT_LABELS = { base: 'Sopra', bottom: 'Sotto', dress: 'Vestito', layer: 'Strato', shoes: 'Scarpe', bag: 'Borsa', acc: 'Accessorio' };
+
+function currentSeason() {
+  const m = new Date().getMonth(); // 0 = gennaio
+  return m <= 1 || m === 11 ? 'winter' : m <= 4 ? 'spring' : m <= 7 ? 'summer' : 'autumn';
+}
+
+function cleanOutfit(o) {
+  return {
+    id: String(o.id),
+    pieces: o.pieces.filter(p => p && typeof p.id === 'string').map(p => ({ slot: String(p.slot || ''), id: p.id })),
+    occasion: occasionById[o.occasion] ? o.occasion : '',
+    season: seasonById[o.season] ? o.season : '',
+    createdAt: Number(o.createdAt) || Date.now(),
+  };
+}
+
+function itemFits(it, season, occasion) {
+  let score = 1;
+  const seasons = it.seasons || [];
+  if (!seasons.length || seasons.includes(season)) score += 2;
+  else score -= 2;
+  const tags = it.tags || [];
+  const goodStyles = OCCASION_STYLES[occasion] || [];
+  if (occasion && tags.includes(occasion)) score += 3;
+  if (tags.some(t => goodStyles.includes(t))) score += 2;
+  if (tags.some(t => profile.styles.includes(t))) score += 1;
+  if ((OCCASION_AVOID[occasion] || []).includes(it.category)) score -= 3;
+  if (it.category === 'suit' && (occasion === 'lavoro' || occasion === 'cerimonia')) score += 2;
+  if (profile.colors.includes(it.color)) score += 1;
+  if (it.favorite) score += 1;
+  score += 1 / (1 + (it.wears || 0)); // dà spazio ai capi poco usati
+  return score;
+}
+
+function weightedPick(list, weights) {
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < list.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return list[i];
+  }
+  return list[list.length - 1];
+}
+
+function colorScore(items) {
+  const colors = items.map(i => i.color).filter(Boolean);
+  const bright = [...new Set(colors.filter(c => !NEUTRALS.has(c)))];
+  let score = 0;
+  if (bright.length <= 1) score += 3;          // un solo colore acceso: sempre ok
+  else if (bright.length === 2) score += 0;
+  else score -= 3 * (bright.length - 2);       // troppi colori accesi
+  if (bright.filter(c => c === 'multi').length && bright.length > 1) score -= 2; // fantasia + altri colori
+  if (colors.includes('black') && colors.includes('navy')) score -= 1;
+  if (colors.includes('black') && colors.includes('brown')) score -= 1;
+  score += colors.filter(c => profile.colors.includes(c)).length * 0.5;
+  return score;
+}
+
+function generateOutfit() {
+  const occasion = $('#occasionSel').value;
+  const season = $('#seasonSel').value || currentSeason();
+  const byCat = cats => state.items.filter(i => cats.includes(i.category));
+  const pools = {
+    base: byCat(['top', 'shirt', 'knit']),
+    bottom: byCat(['pants', 'skirt']),
+    dress: profile.gender === 'm' ? [] : byCat(['dress']),
+    layer: byCat(['outer', 'suit', 'knit']),
+    shoes: byCat(['shoes']),
+    bag: byCat(['bag']),
+    acc: byCat(['acc']),
+  };
+  const canSeparates = pools.base.length && pools.bottom.length;
+  if (!canSeparates && !pools.dress.length) return null;
+
+  const locked = state.current
+    ? state.current.pieces.filter(p => state.locked.has(p.id))
+    : [];
+  const lockedSlots = new Map(locked.map(p => [p.slot, p.id]));
+  const itemOf = id => state.items.find(i => i.id === id);
+  const cold = season === 'winter' || season === 'autumn';
+
+  const pick = (slot, exclude = []) => {
+    if (lockedSlots.has(slot)) return itemOf(lockedSlots.get(slot));
+    const pool = pools[slot].filter(i => !exclude.includes(i.id));
+    if (!pool.length) return null;
+    return weightedPick(pool, pool.map(i => Math.max(0.2, itemFits(i, season, occasion))));
+  };
+
+  let best = null;
+  for (let n = 0; n < 80; n++) {
+    let useDress;
+    if (lockedSlots.has('dress')) useDress = true;
+    else if (lockedSlots.has('base') || lockedSlots.has('bottom')) useDress = false;
+    else useDress = pools.dress.length && (!canSeparates || Math.random() < pools.dress.length / (pools.dress.length + pools.base.length));
+
+    const pieces = [];
+    const used = [];
+    const add = (slot, it) => { if (it) { pieces.push({ slot, it }); used.push(it.id); } };
+
+    if (useDress) add('dress', pick('dress'));
+    else { add('base', pick('base')); add('bottom', pick('bottom')); }
+
+    const wantLayer = lockedSlots.has('layer') || (pools.layer.length && (cold || occasion === 'lavoro' || occasion === 'cerimonia' ? Math.random() < 0.85 : Math.random() < 0.25));
+    if (wantLayer) add('layer', pick('layer', used));
+    add('shoes', pick('shoes'));
+    if (lockedSlots.has('bag') || Math.random() < 0.6) add('bag', pick('bag'));
+    if (lockedSlots.has('acc') || Math.random() < 0.5) add('acc', pick('acc'));
+
+    const items = pieces.map(p => p.it);
+    let score = items.reduce((a, it) => a + itemFits(it, season, occasion), 0) / items.length * 2 + colorScore(items);
+    if (pools.shoes.length && !pieces.some(p => p.slot === 'shoes')) score -= 5;
+    if (cold && !pieces.some(p => p.slot === 'layer') && pools.layer.length) score -= 1;
+    const sig = pieces.map(p => p.it.id).sort().join('|');
+    if (sig === state.lastSig) score -= 10; // non ripetere l'outfit appena visto
+    score += Math.random() * 1.5;           // un po' di varietà
+    if (!best || score > best.score) best = { pieces, score, sig };
+  }
+
+  state.lastSig = best.sig;
+  return {
+    pieces: best.pieces.map(p => ({ slot: p.slot, id: p.it.id })),
+    occasion,
+    season,
+  };
+}
+
+function outfitReason(o) {
+  const items = o.pieces.map(p => state.items.find(i => i.id === p.id)).filter(Boolean);
+  const parts = [];
+  if (o.occasion) parts.push(`per ${occasionById[o.occasion].label.toLowerCase()}`);
+  if (o.season) parts.push(seasonById[o.season].label.toLowerCase());
+  const bright = [...new Set(items.map(i => i.color).filter(c => c && !NEUTRALS.has(c)))];
+  if (bright.length === 0 && items.some(i => i.color)) parts.push('tutto su colori neutri');
+  else if (bright.length === 1) parts.push(`${colorById[bright[0]].label.toLowerCase()} come colore protagonista`);
+  const favs = items.filter(i => profile.colors.includes(i.color));
+  if (favs.length) parts.push('con i tuoi colori preferiti');
+  return parts.length ? 'Pensato ' + parts.join(', ') + '.' : '';
+}
+
+function pieceEl(p, { lockable }) {
+  const it = state.items.find(i => i.id === p.id);
+  if (!it) return null;
+  const url = photoUrl(it);
+  const locked = lockable && state.locked.has(it.id);
+  return el('button', {
+    class: 'piece' + (locked ? ' locked' : ''),
+    'aria-pressed': lockable ? String(locked) : null,
+    onclick: () => {
+      if (!lockable) return openDetail(it.id);
+      if (state.locked.has(it.id)) state.locked.delete(it.id); else state.locked.add(it.id);
+      renderCurrentOutfit();
+    },
+  },
+    url ? el('img', { src: url, alt: '' }) : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚'),
+    locked ? el('span', { class: 'piece-lock' }, '🔒') : null,
+    el('div', { class: 'piece-body' },
+      el('div', { class: 'piece-cat' }, SLOT_LABELS[p.slot] || ''),
+      el('div', { class: 'piece-name' }, it.name),
+    ),
+  );
+}
+
+function renderCurrentOutfit() {
+  const box = $('#outfitResult');
+  const o = state.current;
+  if (!o) { box.replaceChildren(); return; }
+  const saved = state.outfits.some(s => outfitSig(s) === outfitSig(o));
+  box.replaceChildren(el('div', { class: 'outfit' },
+    el('div', { class: 'outfit-pieces' }, o.pieces.map(p => pieceEl(p, { lockable: true }))),
+    el('p', { class: 'outfit-why' }, outfitReason(o)),
+    el('p', { class: 'outfit-hint' }, 'Tocca un capo per bloccarlo 🔒: resterà nel prossimo outfit.'),
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn', onclick: onGenerate }, '🔄 Un altro'),
+      el('button', { class: 'btn', onclick: saveCurrentOutfit, disabled: saved }, saved ? '♥ Salvato' : '♡ Salva'),
+      el('button', { class: 'btn primary', onclick: () => wearOutfit(o) }, '✅ Indosso'),
+    ),
+  ));
+}
+
+function outfitSig(o) {
+  return o.pieces.map(p => p.id).sort().join('|');
+}
+
+function onGenerate() {
+  const o = generateOutfit();
+  if (!o) {
+    state.current = null;
+    $('#outfitResult').replaceChildren(el('div', { class: 'outfit' },
+      el('p', {}, 'Servono più capi per creare un outfit.'),
+      el('p', { class: 'muted' }, profile.gender === 'm'
+        ? 'Aggiungi almeno una maglia o camicia e un paio di pantaloni.'
+        : 'Aggiungi almeno una maglia e un pantalone o una gonna, oppure un vestito.'),
+    ));
+    return;
+  }
+  // Tieni bloccati solo i capi che sono ancora nell'outfit
+  state.locked = new Set([...state.locked].filter(id => o.pieces.some(p => p.id === id)));
+  state.current = o;
+  renderCurrentOutfit();
+}
+
+async function saveCurrentOutfit() {
+  const o = state.current;
+  if (!o) return;
+  const outfit = { id: uid(), pieces: o.pieces, occasion: o.occasion, season: o.season, createdAt: Date.now() };
+  await db.putOutfit(outfit);
+  state.outfits.push(outfit);
+  renderCurrentOutfit();
+  renderSavedOutfits();
+  toast('Outfit salvato');
+}
+
+async function wearOutfit(o) {
+  const now = Date.now();
+  for (const p of o.pieces) {
+    const it = state.items.find(i => i.id === p.id);
+    if (!it) continue;
+    it.wears = (it.wears || 0) + 1;
+    it.lastWorn = now;
+    await db.put(it);
+  }
+  render();
+  toast('Buona giornata! Outfit segnato come indossato');
+}
+
+function renderSavedOutfits() {
+  const wrap = $('#savedOutfits');
+  const list = state.outfits
+    .map(o => ({ ...o, pieces: o.pieces.filter(p => state.items.some(i => i.id === p.id)) }))
+    .filter(o => o.pieces.length)
+    .sort((a, b) => b.createdAt - a.createdAt);
+  if (!list.length) {
+    wrap.replaceChildren(el('p', { class: 'muted' }, 'Nessun outfit salvato. Genera un outfit e tocca ♡ Salva.'));
+    return;
+  }
+  wrap.replaceChildren(el('div', { class: 'saved' }, list.map(o => el('div', { class: 'saved-row' },
+    el('button', {
+      class: 'saved-thumbs',
+      'aria-label': 'Apri outfit',
+      onclick: () => {
+        state.current = { pieces: o.pieces, occasion: o.occasion, season: o.season };
+        state.locked = new Set();
+        renderCurrentOutfit();
+        $('#outfitResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
+    }, o.pieces.map(p => {
+      const it = state.items.find(i => i.id === p.id);
+      const url = photoUrl(it);
+      return url ? el('img', { src: url, alt: it.name }) : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚');
+    })),
+    el('div', { class: 'saved-meta' },
+      el('div', {}, o.occasion ? occasionById[o.occasion].label : ''),
+      el('div', {}, new Date(o.createdAt).toLocaleDateString('it-IT')),
+      el('button', {
+        class: 'btn small ghost',
+        'aria-label': 'Elimina outfit',
+        onclick: async () => {
+          if (!confirm('Eliminare questo outfit?')) return;
+          await db.removeOutfit(o.id);
+          state.outfits = state.outfits.filter(x => x.id !== o.id);
+          renderSavedOutfits();
+          renderCurrentOutfit();
+        },
+      }, '🗑️'),
+    ),
+  ))));
+}
+
+function fillOutfitControls() {
+  const occ = $('#occasionSel');
+  const prev = occ.value;
+  const mine = OCCASIONS.filter(o => profile.occasions.includes(o.id));
+  const others = OCCASIONS.filter(o => !profile.occasions.includes(o.id));
+  occ.replaceChildren(
+    el('option', { value: '' }, 'Qualsiasi'),
+    ...[...mine, ...others].map(o => el('option', { value: o.id }, `${o.emoji} ${o.label}`)),
+  );
+  occ.value = prev || mine[0]?.id || '';
+
+  const sea = $('#seasonSel');
+  if (!sea.options.length) {
+    sea.append(el('option', { value: '' }, `Adesso (${seasonById[currentSeason()].label})`));
+    SEASONS.forEach(s => sea.append(el('option', { value: s.id }, s.label)));
+  }
+}
+
+function renderOutfitView() {
+  fillOutfitControls();
+  if (state.current) {
+    state.current.pieces = state.current.pieces.filter(p => state.items.some(i => i.id === p.id));
+    if (!state.current.pieces.length) state.current = null;
+  }
+  renderCurrentOutfit();
+  renderSavedOutfits();
+}
+
+function showView(view) {
+  state.view = view;
+  $('#wardrobeView').hidden = view !== 'wardrobe';
+  $('#wardrobeTools').hidden = view !== 'wardrobe';
+  $('#outfitView').hidden = view !== 'outfit';
+  $('#addBtn').hidden = view !== 'wardrobe';
+  $('#pageTitle').textContent = view === 'outfit' ? 'Outfit' : 'Il mio Armadio';
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.dataset.view === view) t.setAttribute('aria-current', 'page');
+    else t.removeAttribute('aria-current');
+  });
+  if (view === 'outfit') {
+    renderOutfitView();
+    if (!state.current && state.items.length) onGenerate();
+  }
+  window.scrollTo(0, 0);
+}
+
+function bindOutfitEvents() {
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showView(t.dataset.view)));
+  $('#generateBtn').addEventListener('click', onGenerate);
+  $('#occasionSel').addEventListener('change', onGenerate);
+  $('#seasonSel').addEventListener('change', onGenerate);
 }
 
 // ---------- Avvio ----------
@@ -785,8 +1166,10 @@ async function init() {
   fillSelects();
   bindEvents();
   bindProfileEvents();
+  bindOutfitEvents();
   try {
     state.items = await db.all();
+    state.outfits = await db.allOutfits();
     // Chiede al browser di non cancellare i dati quando lo spazio scarseggia
     navigator.storage?.persist?.();
   } catch (err) {
