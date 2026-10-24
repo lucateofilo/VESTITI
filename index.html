@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Il mio Armadio</title>
+  <meta name="description" content="Armadio digitale: fotografa e organizza i tuoi vestiti.">
+  <meta name="theme-color" content="#1f1b24">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <h1>Il mio Armadio</h1>
+      <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
+    </div>
+    <input id="search" type="search" placeholder="Cerca per nome, marca, tag…" autocomplete="off">
+    <nav id="categoryChips" class="chips" aria-label="Categorie"></nav>
+    <div class="filters">
+      <select id="colorFilter" aria-label="Colore"><option value="">Tutti i colori</option></select>
+      <select id="seasonFilter" aria-label="Stagione"><option value="">Tutte le stagioni</option></select>
+      <select id="sortBy" aria-label="Ordina">
+        <option value="new">Più recenti</option>
+        <option value="name">Nome A–Z</option>
+        <option value="worn">Più indossati</option>
+        <option value="least">Meno indossati</option>
+      </select>
+      <button id="favFilter" class="toggle" aria-pressed="false" title="Solo preferiti">♡</button>
+    </div>
+  </header>
+
+  <main>
+    <p id="stats" class="stats"></p>
+    <section id="grid" class="grid" aria-live="polite"></section>
+    <div id="empty" class="empty" hidden>
+      <div class="empty-emoji">👗</div>
+      <p>Il tuo armadio è vuoto.</p>
+      <p class="muted">Tocca <strong>+</strong> per aggiungere il primo capo.</p>
+    </div>
+  </main>
+
+  <button id="addBtn" class="fab" aria-label="Aggiungi capo">+</button>
+
+  <!-- Aggiungi / modifica capo -->
+  <dialog id="itemDialog">
+    <form id="itemForm" method="dialog">
+      <h2 id="itemDialogTitle">Nuovo capo</h2>
+      <label class="photo-picker">
+        <img id="photoPreview" alt="" hidden>
+        <span id="photoPlaceholder">📷 Scatta o scegli una foto</span>
+        <input id="photoInput" type="file" accept="image/*">
+      </label>
+      <label>Nome
+        <input name="name" required maxlength="60" placeholder="es. Camicia di lino bianca">
+      </label>
+      <div class="row">
+        <label>Categoria
+          <select name="category" id="categorySelect" required></select>
+        </label>
+        <label>Colore
+          <select name="color" id="colorSelect"></select>
+        </label>
+      </div>
+      <fieldset>
+        <legend>Stagioni</legend>
+        <div id="seasonChecks" class="checks"></div>
+      </fieldset>
+      <div class="row">
+        <label>Marca
+          <input name="brand" maxlength="40" placeholder="facoltativo">
+        </label>
+        <label>Taglia
+          <input name="size" maxlength="10" placeholder="facoltativo">
+        </label>
+      </div>
+      <label>Tag
+        <input name="tags" maxlength="100" placeholder="es. ufficio, elegante, sport">
+      </label>
+      <label>Note
+        <textarea name="notes" rows="2" maxlength="300"></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="btn ghost" data-close>Annulla</button>
+        <button type="submit" class="btn primary">Salva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dettaglio capo -->
+  <dialog id="detailDialog">
+    <div class="detail">
+      <img id="detailImg" alt="">
+      <div class="detail-body">
+        <div class="detail-head">
+          <h2 id="detailName"></h2>
+          <button id="detailFav" class="icon-btn fav" aria-label="Preferito">♡</button>
+        </div>
+        <p id="detailMeta" class="muted"></p>
+        <p id="detailTags"></p>
+        <p id="detailNotes" class="notes"></p>
+        <div class="wear">
+          <span id="detailWears"></span>
+          <button id="wearBtn" class="btn small">Indossato oggi</button>
+        </div>
+        <div class="actions">
+          <button id="deleteBtn" class="btn danger">Elimina</button>
+          <button id="editBtn" class="btn ghost">Modifica</button>
+          <button class="btn primary" data-close>Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Menu -->
+  <dialog id="menuDialog">
+    <h2>Backup</h2>
+    <p class="muted">I tuoi capi sono salvati solo su questo dispositivo. Esporta un backup ogni tanto per non perderli, o per spostarli su un altro telefono.</p>
+    <div class="menu-list">
+      <button id="exportBtn" class="btn">⬇️ Esporta backup</button>
+      <label class="btn">⬆️ Importa backup
+        <input id="importInput" type="file" accept="application/json,.json" hidden>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn primary" data-close>Chiudi</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

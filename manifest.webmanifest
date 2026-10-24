@@ -1,0 +1,14 @@
+{
+  "name": "Il mio Armadio",
+  "short_name": "Armadio",
+  "description": "Armadio digitale: fotografa e organizza i tuoi vestiti.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f4f1",
+  "theme_color": "#1f1b24",
+  "lang": "it",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
