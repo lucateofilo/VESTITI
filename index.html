@@ -15,7 +15,10 @@
 <body>
   <header class="topbar">
     <div class="topbar-row">
-      <h1>Il mio Armadio</h1>
+      <div>
+        <h1>Il mio Armadio</h1>
+        <p id="greeting" class="greeting" hidden></p>
+      </div>
       <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
     </div>
     <input id="search" type="search" placeholder="Cerca per nome, marca, tag…" autocomplete="off">
@@ -80,6 +83,7 @@
       <label>Tag
         <input name="tags" maxlength="100" placeholder="es. ufficio, elegante, sport">
       </label>
+      <div id="tagSuggestions" class="suggest"></div>
       <label>Note
         <textarea name="notes" rows="2" maxlength="300"></textarea>
       </label>
@@ -117,7 +121,12 @@
 
   <!-- Menu -->
   <dialog id="menuDialog">
-    <h2>Backup</h2>
+    <h2>Profilo</h2>
+    <p id="profileSummary" class="muted"></p>
+    <div class="menu-list">
+      <button id="editProfileBtn" class="btn">👤 Modifica profilo</button>
+    </div>
+    <h2 class="spaced">Backup</h2>
     <p class="muted">I tuoi capi sono salvati solo su questo dispositivo. Esporta un backup ogni tanto per non perderli, o per spostarli su un altro telefono.</p>
     <div class="menu-list">
       <button id="exportBtn" class="btn">⬇️ Esporta backup</button>
@@ -128,6 +137,66 @@
     <div class="actions">
       <button class="btn primary" data-close>Chiudi</button>
     </div>
+  </dialog>
+
+  <!-- Profilo / configurazione iniziale -->
+  <dialog id="profileDialog" class="wizard">
+    <form id="profileForm" method="dialog">
+      <div class="progress" id="wizProgress"></div>
+
+      <section class="step" data-step="0">
+        <div class="step-emoji">👋</div>
+        <h2>Benvenuto nel tuo armadio</h2>
+        <p class="muted">Rispondi a qualche domanda per personalizzare l'app. Puoi cambiare tutto quando vuoi dal menu ⋯.</p>
+        <label>Come ti chiami?
+          <input name="name" maxlength="30" placeholder="facoltativo" autocomplete="given-name">
+        </label>
+      </section>
+
+      <section class="step" data-step="1">
+        <h2>Per chi è questo armadio?</h2>
+        <p class="muted">Adattiamo categorie e taglie.</p>
+        <div class="options big" id="genderOptions"></div>
+      </section>
+
+      <section class="step" data-step="2">
+        <h2>Che stile ti piace?</h2>
+        <p class="muted">Scegline quanti vuoi.</p>
+        <div class="options" id="styleOptions"></div>
+      </section>
+
+      <section class="step" data-step="3">
+        <h2>I tuoi colori preferiti</h2>
+        <p class="muted">Scegline quanti vuoi.</p>
+        <div class="options" id="favColorOptions"></div>
+      </section>
+
+      <section class="step" data-step="4">
+        <h2>Per quali occasioni ti vesti?</h2>
+        <p class="muted">Scegline quante vuoi.</p>
+        <div class="options" id="occasionOptions"></div>
+      </section>
+
+      <section class="step" data-step="5">
+        <h2>Le tue taglie</h2>
+        <p class="muted">Le useremo per compilare la taglia quando aggiungi un capo.</p>
+        <label>Taglia sopra (magliette, camicie, giacche)
+          <select name="sizeTop" id="sizeTop"></select>
+        </label>
+        <label>Taglia pantaloni
+          <select name="sizeBottom" id="sizeBottom"></select>
+        </label>
+        <label>Numero di scarpe
+          <select name="sizeShoes" id="sizeShoes"></select>
+        </label>
+      </section>
+
+      <div class="actions wiz-actions">
+        <button type="button" id="wizBack" class="btn ghost">Indietro</button>
+        <button type="button" id="wizSkip" class="btn ghost">Salta</button>
+        <button type="submit" id="wizNext" class="btn primary">Avanti</button>
+      </div>
+    </form>
   </dialog>
 
   <div id="toast" class="toast" role="status" hidden></div>

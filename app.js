@@ -1,16 +1,18 @@
 'use strict';
 
 // ---------- Dati fissi ----------
+// size: quale taglia del profilo usare; labelM: nome per l'armadio da uomo; women: solo per donna
 const CATEGORIES = [
-  { id: 'top', label: 'Magliette & Top', emoji: '👕' },
-  { id: 'shirt', label: 'Camicie', emoji: '👔' },
-  { id: 'knit', label: 'Maglioni & Felpe', emoji: '🧶' },
-  { id: 'outer', label: 'Giacche & Cappotti', emoji: '🧥' },
-  { id: 'pants', label: 'Pantaloni & Jeans', emoji: '👖' },
-  { id: 'skirt', label: 'Gonne & Shorts', emoji: '🩳' },
-  { id: 'dress', label: 'Vestiti', emoji: '👗' },
-  { id: 'shoes', label: 'Scarpe', emoji: '👟' },
-  { id: 'bag', label: 'Borse', emoji: '👜' },
+  { id: 'top', label: 'Magliette & Top', labelM: 'Magliette & Polo', emoji: '👕', size: 'top' },
+  { id: 'shirt', label: 'Camicie', emoji: '👔', size: 'top' },
+  { id: 'knit', label: 'Maglioni & Felpe', emoji: '🧶', size: 'top' },
+  { id: 'outer', label: 'Giacche & Cappotti', emoji: '🧥', size: 'top' },
+  { id: 'suit', label: 'Completi & Blazer', emoji: '🤵', size: 'top' },
+  { id: 'pants', label: 'Pantaloni & Jeans', emoji: '👖', size: 'bottom' },
+  { id: 'skirt', label: 'Gonne & Shorts', labelM: 'Shorts & Bermuda', emoji: '🩳', size: 'bottom' },
+  { id: 'dress', label: 'Vestiti', emoji: '👗', size: 'top', women: true },
+  { id: 'shoes', label: 'Scarpe', emoji: '👟', size: 'shoes' },
+  { id: 'bag', label: 'Borse', labelM: 'Borse & Zaini', emoji: '👜' },
   { id: 'acc', label: 'Accessori', emoji: '🧣' },
 ];
 
@@ -39,9 +41,95 @@ const SEASONS = [
   { id: 'winter', label: 'Inverno' },
 ];
 
+const GENDERS = [
+  { id: 'w', label: 'Donna', emoji: '👩' },
+  { id: 'm', label: 'Uomo', emoji: '👨' },
+  { id: 'x', label: 'Entrambi / Unisex', emoji: '🧑' },
+];
+
+const STYLES = [
+  { id: 'casual', label: 'Casual', emoji: '👟' },
+  { id: 'elegante', label: 'Elegante', emoji: '✨' },
+  { id: 'classico', label: 'Classico', emoji: '🎩' },
+  { id: 'minimal', label: 'Minimal', emoji: '◻️' },
+  { id: 'sportivo', label: 'Sportivo', emoji: '🏃' },
+  { id: 'streetwear', label: 'Streetwear', emoji: '🧢' },
+  { id: 'business', label: 'Business', emoji: '💼' },
+  { id: 'boho', label: 'Boho', emoji: '🌼' },
+  { id: 'vintage', label: 'Vintage', emoji: '📻' },
+  { id: 'romantico', label: 'Romantico', emoji: '🌸' },
+  { id: 'rock', label: 'Rock', emoji: '🎸' },
+  { id: 'preppy', label: 'Preppy', emoji: '🎓' },
+];
+
+const OCCASIONS = [
+  { id: 'lavoro', label: 'Lavoro', emoji: '💼' },
+  { id: 'università', label: 'Scuola / Università', emoji: '📚' },
+  { id: 'tempo libero', label: 'Tempo libero', emoji: '☕' },
+  { id: 'sport', label: 'Sport', emoji: '🏋️' },
+  { id: 'serata', label: 'Serate', emoji: '🍸' },
+  { id: 'cerimonia', label: 'Cerimonie & Eventi', emoji: '💍' },
+  { id: 'viaggio', label: 'Viaggi', emoji: '✈️' },
+  { id: 'appuntamento', label: 'Appuntamenti', emoji: '❤️' },
+];
+
+const SIZES_TOP = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+const SIZES_BOTTOM = {
+  w: ['36', '38', '40', '42', '44', '46', '48', '50', '52'],
+  m: ['42', '44', '46', '48', '50', '52', '54', '56', '58'],
+};
+const SIZES_SHOES = Array.from({ length: 15 }, (_, i) => String(34 + i)); // 34–48
+
 const catById = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 const colorById = Object.fromEntries(COLORS.map(c => [c.id, c]));
 const seasonById = Object.fromEntries(SEASONS.map(s => [s.id, s]));
+const styleById = Object.fromEntries(STYLES.map(s => [s.id, s]));
+const occasionById = Object.fromEntries(OCCASIONS.map(o => [o.id, o]));
+const genderById = Object.fromEntries(GENDERS.map(g => [g.id, g]));
+
+// ---------- Profilo (salvato nel browser) ----------
+const PROFILE_KEY = 'armadio-profile';
+
+function emptyProfile() {
+  return { name: '', gender: '', styles: [], colors: [], occasions: [], sizes: { top: '', bottom: '', shoes: '' } };
+}
+
+function cleanProfile(raw) {
+  const p = emptyProfile();
+  if (!raw || typeof raw !== 'object') return p;
+  p.name = String(raw.name || '').slice(0, 30);
+  p.gender = genderById[raw.gender] ? raw.gender : '';
+  p.styles = Array.isArray(raw.styles) ? raw.styles.filter(s => styleById[s]) : [];
+  p.colors = Array.isArray(raw.colors) ? raw.colors.filter(c => colorById[c]) : [];
+  p.occasions = Array.isArray(raw.occasions) ? raw.occasions.filter(o => occasionById[o]) : [];
+  const sz = raw.sizes || {};
+  p.sizes = { top: String(sz.top || ''), bottom: String(sz.bottom || ''), shoes: String(sz.shoes || '') };
+  p.done = !!raw.done;
+  return p;
+}
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? cleanProfile(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveProfile(p) {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch { /* storage non disponibile */ }
+}
+
+let profile = loadProfile() || emptyProfile();
+
+function catLabel(c) {
+  return profile.gender === 'm' && c.labelM ? c.labelM : c.label;
+}
+
+function visibleCategories() {
+  return CATEGORIES.filter(c => !(c.women && profile.gender === 'm'));
+}
 
 // ---------- Database (IndexedDB, tutto resta sul dispositivo) ----------
 const DB_NAME = 'armadio';
@@ -190,7 +278,7 @@ function filteredItems() {
     if (state.favOnly && !it.favorite) return false;
     if (q) {
       const hay = [it.name, it.brand, it.notes, ...(it.tags || []),
-        catById[it.category]?.label, colorById[it.color]?.label].join(' ').toLowerCase();
+        catById[it.category] && catLabel(catById[it.category]), colorById[it.color]?.label].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -217,7 +305,7 @@ function renderChips() {
   }, label);
   wrap.append(make('', `Tutto (${state.items.length})`));
   for (const c of CATEGORIES) {
-    if (counts[c.id]) wrap.append(make(c.id, `${c.emoji} ${c.label} (${counts[c.id]})`));
+    if (counts[c.id]) wrap.append(make(c.id, `${c.emoji} ${catLabel(c)} (${counts[c.id]})`));
   }
 }
 
@@ -232,7 +320,7 @@ function renderGrid() {
       it.favorite ? el('span', { class: 'card-fav' }, '♥') : null,
       el('div', { class: 'card-body' },
         el('div', { class: 'card-name' }, it.name),
-        el('div', { class: 'card-sub' }, swatch(it.color), catById[it.category]?.label || ''),
+        el('div', { class: 'card-sub' }, swatch(it.color), catById[it.category] ? catLabel(catById[it.category]) : ''),
       ),
     );
   }));
@@ -247,15 +335,20 @@ function renderGrid() {
   }
 }
 
+function renderGreeting() {
+  const g = $('#greeting');
+  g.hidden = !profile.name;
+  g.textContent = profile.name ? `Ciao, ${profile.name}!` : '';
+}
+
 function render() {
+  renderGreeting();
   renderChips();
   renderGrid();
 }
 
 // ---------- Form aggiungi/modifica ----------
 function fillSelects() {
-  const catSel = $('#categorySelect');
-  CATEGORIES.forEach(c => catSel.append(el('option', { value: c.id }, `${c.emoji} ${c.label}`)));
 
   const colorSel = $('#colorSelect');
   colorSel.append(el('option', { value: '' }, '—'));
@@ -287,6 +380,41 @@ function setPhotoPreview(url) {
 }
 
 let previewUrl = null;
+let autoSize = ''; // ultima taglia inserita in automatico dal profilo
+
+function fillCategorySelect(current) {
+  const catSel = $('#categorySelect');
+  const cats = visibleCategories();
+  // Se un capo esistente ha una categoria nascosta, la mostriamo comunque
+  if (current && !cats.some(c => c.id === current) && catById[current]) cats.push(catById[current]);
+  catSel.replaceChildren(...cats.map(c => el('option', { value: c.id }, `${c.emoji} ${catLabel(c)}`)));
+}
+
+function applyProfileSize() {
+  const form = $('#itemForm');
+  const key = catById[form.category.value]?.size;
+  const size = key ? profile.sizes[key] : '';
+  // Cambia la taglia solo se l'utente non l'ha scritta a mano
+  if (form.size.value === '' || form.size.value === autoSize) {
+    form.size.value = size || '';
+    autoSize = size || '';
+  }
+}
+
+function renderTagSuggestions() {
+  const form = $('#itemForm');
+  const current = parseTags(form.tags.value);
+  const wanted = [...profile.styles, ...profile.occasions].filter(t => !current.includes(t));
+  $('#tagSuggestions').replaceChildren(...wanted.map(t => el('button', {
+    type: 'button',
+    onclick: () => {
+      const tags = parseTags(form.tags.value);
+      tags.push(t);
+      form.tags.value = tags.join(', ');
+      renderTagSuggestions();
+    },
+  }, '+ ' + t)));
+}
 
 function openForm(item = null) {
   const form = $('#itemForm');
@@ -294,6 +422,8 @@ function openForm(item = null) {
   state.editingId = item ? item.id : null;
   state.pendingPhoto = undefined;
   if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+  autoSize = '';
+  fillCategorySelect(item?.category);
   $('#itemDialogTitle').textContent = item ? 'Modifica capo' : 'Nuovo capo';
 
   if (item) {
@@ -307,9 +437,11 @@ function openForm(item = null) {
     form.querySelectorAll('input[name=seasons]').forEach(cb => { cb.checked = (item.seasons || []).includes(cb.value); });
     setPhotoPreview(photoUrl(item));
   } else {
-    if (state.category) form.category.value = state.category;
+    if (state.category && visibleCategories().some(c => c.id === state.category)) form.category.value = state.category;
+    applyProfileSize();
     setPhotoPreview(null);
   }
+  renderTagSuggestions();
   $('#itemDialog').showModal();
 }
 
@@ -383,7 +515,7 @@ function renderDetail() {
   $('#detailFav').setAttribute('aria-pressed', String(!!it.favorite));
 
   const meta = [
-    catById[it.category]?.label,
+    catById[it.category] && catLabel(catById[it.category]),
     colorById[it.color]?.label,
     it.brand,
     it.size && `Taglia ${it.size}`,
@@ -428,7 +560,7 @@ async function exportBackup() {
     const { photo, ...rest } = it;
     return { ...rest, photo: photo ? await blobToDataUrl(photo) : null };
   }));
-  const data = { app: 'armadio', version: 1, exportedAt: new Date().toISOString(), items };
+  const data = { app: 'armadio', version: 1, exportedAt: new Date().toISOString(), profile, items };
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const a = el('a', {
     href: URL.createObjectURL(blob),
@@ -472,6 +604,10 @@ async function importBackup(e) {
       await db.put(item);
       added++;
     }
+    if (data.profile) {
+      profile = cleanProfile(data.profile);
+      saveProfile(profile);
+    }
     state.items = await db.all();
     render();
     $('#menuDialog').close();
@@ -480,6 +616,125 @@ async function importBackup(e) {
     console.error(err);
     toast('File di backup non valido');
   }
+}
+
+// ---------- Configurazione profilo ----------
+const STEPS = 6;
+let step = 0;
+let draft = null;
+
+function optionList(container, type, name, list, selected) {
+  container.replaceChildren(...list.map(o => el('label', {},
+    el('input', { type, name, value: o.id, checked: selected.includes(o.id) }),
+    o.hex ? swatch(o.id) : el('span', { class: 'opt-emoji' }, o.emoji),
+    o.label,
+  )));
+}
+
+function fillSizeSelect(sel, values, current) {
+  const opts = [el('option', { value: '' }, '—')];
+  if (current && !values.includes(current)) values = [current, ...values];
+  values.forEach(v => opts.push(el('option', { value: v }, v)));
+  sel.replaceChildren(...opts);
+  sel.value = current || '';
+}
+
+function buildProfileForm() {
+  const f = $('#profileForm');
+  f.name.value = draft.name;
+  optionList($('#genderOptions'), 'radio', 'gender', GENDERS, [draft.gender]);
+  optionList($('#styleOptions'), 'checkbox', 'styles', STYLES, draft.styles);
+  optionList($('#favColorOptions'), 'checkbox', 'colors', COLORS, draft.colors);
+  optionList($('#occasionOptions'), 'checkbox', 'occasions', OCCASIONS, draft.occasions);
+  fillSizeSelect($('#sizeTop'), SIZES_TOP, draft.sizes.top);
+  fillSizeSelect($('#sizeShoes'), SIZES_SHOES, draft.sizes.shoes);
+  fillBottomSizes();
+}
+
+function fillBottomSizes() {
+  const g = $('#profileForm').querySelector('input[name=gender]:checked')?.value || draft.gender;
+  const values = g === 'w' ? SIZES_BOTTOM.w
+    : g === 'm' ? SIZES_BOTTOM.m
+    : [...new Set([...SIZES_BOTTOM.w, ...SIZES_BOTTOM.m])].sort((a, b) => a - b);
+  fillSizeSelect($('#sizeBottom'), [...values], $('#sizeBottom').value || draft.sizes.bottom);
+}
+
+function readProfileForm() {
+  const f = $('#profileForm');
+  const checked = n => [...f.querySelectorAll(`input[name=${n}]:checked`)].map(i => i.value);
+  return cleanProfile({
+    name: f.name.value.trim(),
+    gender: checked('gender')[0] || '',
+    styles: checked('styles'),
+    colors: checked('colors'),
+    occasions: checked('occasions'),
+    sizes: { top: f.sizeTop.value, bottom: f.sizeBottom.value, shoes: f.sizeShoes.value },
+    done: true,
+  });
+}
+
+function showStep(n) {
+  step = n;
+  document.querySelectorAll('#profileForm .step').forEach(s => { s.hidden = Number(s.dataset.step) !== n; });
+  $('#wizProgress').replaceChildren(...Array.from({ length: STEPS }, (_, i) => el('span', { class: i <= n ? 'on' : '' })));
+  $('#wizBack').hidden = n === 0;
+  $('#wizSkip').hidden = n === 0 || n === STEPS - 1;
+  $('#wizNext').textContent = n === 0 ? 'Inizia' : n === STEPS - 1 ? 'Fatto' : 'Avanti';
+  $('#profileDialog').scrollTop = 0;
+}
+
+function openProfile() {
+  draft = cleanProfile(profile);
+  buildProfileForm();
+  showStep(0);
+  if ($('#menuDialog').open) $('#menuDialog').close();
+  $('#profileDialog').showModal();
+}
+
+function finishProfile() {
+  const wasMale = profile.gender === 'm';
+  profile = readProfileForm();
+  saveProfile(profile);
+  $('#profileDialog').close();
+  // Se la categoria selezionata non esiste più per questo profilo, torna a "Tutto"
+  if (!wasMale && profile.gender === 'm' && state.category === 'dress' && !state.items.some(i => i.category === 'dress')) state.category = '';
+  render();
+  toast(profile.name ? `Profilo salvato, ${profile.name}!` : 'Profilo salvato');
+}
+
+function renderProfileSummary() {
+  const p = profile;
+  const parts = [];
+  if (p.name) parts.push(p.name);
+  if (p.gender) parts.push(genderById[p.gender].label);
+  if (p.styles.length) parts.push('Stile: ' + p.styles.map(s => styleById[s].label).join(', '));
+  if (p.colors.length) parts.push('Colori: ' + p.colors.map(c => colorById[c].label).join(', '));
+  if (p.occasions.length) parts.push('Occasioni: ' + p.occasions.map(o => occasionById[o].label).join(', '));
+  const sz = [p.sizes.top && `sopra ${p.sizes.top}`, p.sizes.bottom && `pantaloni ${p.sizes.bottom}`, p.sizes.shoes && `scarpe ${p.sizes.shoes}`].filter(Boolean);
+  if (sz.length) parts.push('Taglie: ' + sz.join(', '));
+  $('#profileSummary').textContent = parts.length ? parts.join(' · ') : 'Profilo non ancora impostato.';
+}
+
+function bindProfileEvents() {
+  $('#profileForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (step < STEPS - 1) showStep(step + 1);
+    else finishProfile();
+  });
+  $('#wizBack').addEventListener('click', () => showStep(Math.max(0, step - 1)));
+  $('#wizSkip').addEventListener('click', () => showStep(step + 1));
+  $('#genderOptions').addEventListener('change', () => {
+    fillBottomSizes();
+    setTimeout(() => showStep(step + 1), 200); // scelta singola: avanza da solo
+  });
+  $('#profileDialog').addEventListener('cancel', e => {
+    // Al primo avvio, Esc salva comunque quello che c'è, per non riproporre il percorso
+    if (!profile.done) { e.preventDefault(); finishProfile(); }
+  });
+  $('#editProfileBtn').addEventListener('click', openProfile);
+  $('#menuBtn').addEventListener('click', renderProfileSummary);
+  $('#itemForm').category.addEventListener('change', applyProfileSize);
+  $('#itemForm').tags.addEventListener('input', renderTagSuggestions);
 }
 
 // ---------- Avvio ----------
@@ -493,7 +748,7 @@ function bindEvents() {
     b.addEventListener('click', () => b.closest('dialog').close()));
 
   // Chiude i dialog toccando lo sfondo
-  document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => {
+  document.querySelectorAll('dialog:not(.wizard)').forEach(d => d.addEventListener('click', e => {
     if (e.target === d) d.close();
   }));
 
@@ -529,6 +784,7 @@ function bindEvents() {
 async function init() {
   fillSelects();
   bindEvents();
+  bindProfileEvents();
   try {
     state.items = await db.all();
     // Chiede al browser di non cancellare i dati quando lo spazio scarseggia
@@ -538,6 +794,7 @@ async function init() {
     toast('Il browser non permette di salvare i dati');
   }
   render();
+  if (!profile.done) openProfile();
 
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').catch(console.error);
