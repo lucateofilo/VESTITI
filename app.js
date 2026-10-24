@@ -3,17 +3,17 @@
 // ---------- Dati fissi ----------
 // size: quale taglia del profilo usare; labelM: nome per l'armadio da uomo; women: solo per donna
 const CATEGORIES = [
-  { id: 'top', label: 'Magliette & Top', labelM: 'Magliette & Polo', emoji: '👕', size: 'top' },
-  { id: 'shirt', label: 'Camicie', emoji: '👔', size: 'top' },
-  { id: 'knit', label: 'Maglioni & Felpe', emoji: '🧶', size: 'top' },
-  { id: 'outer', label: 'Giacche & Cappotti', emoji: '🧥', size: 'top' },
-  { id: 'suit', label: 'Completi & Blazer', emoji: '🤵', size: 'top' },
-  { id: 'pants', label: 'Pantaloni & Jeans', emoji: '👖', size: 'bottom' },
-  { id: 'skirt', label: 'Gonne & Shorts', labelM: 'Shorts & Bermuda', emoji: '🩳', size: 'bottom' },
-  { id: 'dress', label: 'Vestiti', emoji: '👗', size: 'top', women: true },
-  { id: 'shoes', label: 'Scarpe', emoji: '👟', size: 'shoes' },
-  { id: 'bag', label: 'Borse', labelM: 'Borse & Zaini', emoji: '👜' },
-  { id: 'acc', label: 'Accessori', emoji: '🧣' },
+  { id: 'top', label: 'Magliette & Top', labelM: 'Magliette & Polo', ic: 'top', size: 'top' },
+  { id: 'shirt', label: 'Camicie', ic: 'shirt', size: 'top' },
+  { id: 'knit', label: 'Maglioni & Felpe', ic: 'knit', size: 'top' },
+  { id: 'outer', label: 'Giacche & Cappotti', ic: 'outer', size: 'top' },
+  { id: 'suit', label: 'Completi & Blazer', ic: 'suit', size: 'top' },
+  { id: 'pants', label: 'Pantaloni & Jeans', ic: 'pants', size: 'bottom' },
+  { id: 'skirt', label: 'Gonne & Shorts', labelM: 'Shorts & Bermuda', ic: 'skirt', size: 'bottom' },
+  { id: 'dress', label: 'Vestiti', ic: 'dress', size: 'top', women: true },
+  { id: 'shoes', label: 'Scarpe', ic: 'shoes', size: 'shoes' },
+  { id: 'bag', label: 'Borse', labelM: 'Borse & Zaini', ic: 'bag' },
+  { id: 'acc', label: 'Accessori', ic: 'acc' },
 ];
 
 const COLORS = [
@@ -42,35 +42,35 @@ const SEASONS = [
 ];
 
 const GENDERS = [
-  { id: 'w', label: 'Donna', emoji: '👗', icon: 'icon-w.svg' },
-  { id: 'm', label: 'Uomo', emoji: '👔', icon: 'icon-m.svg' },
-  { id: 'x', label: 'Entrambi / Unisex', emoji: '👕', icon: 'icon-x.svg' },
+  { id: 'w', label: 'Donna', icon: 'icon-w.svg' },
+  { id: 'm', label: 'Uomo', icon: 'icon-m.svg' },
+  { id: 'x', label: 'Entrambi / Unisex', icon: 'icon-x.svg' },
 ];
 
 const STYLES = [
-  { id: 'casual', label: 'Casual', emoji: '👟' },
-  { id: 'elegante', label: 'Elegante', emoji: '✨' },
-  { id: 'classico', label: 'Classico', emoji: '🎩' },
-  { id: 'minimal', label: 'Minimal', emoji: '◻️' },
-  { id: 'sportivo', label: 'Sportivo', emoji: '🏃' },
-  { id: 'streetwear', label: 'Streetwear', emoji: '🧢' },
-  { id: 'business', label: 'Business', emoji: '💼' },
-  { id: 'boho', label: 'Boho', emoji: '🌼' },
-  { id: 'vintage', label: 'Vintage', emoji: '📻' },
-  { id: 'romantico', label: 'Romantico', emoji: '🌸' },
-  { id: 'rock', label: 'Rock', emoji: '🎸' },
-  { id: 'preppy', label: 'Preppy', emoji: '🎓' },
+  { id: 'casual', label: 'Casual', ic: 'shoes' },
+  { id: 'elegante', label: 'Elegante', ic: 'sparkles' },
+  { id: 'classico', label: 'Classico', ic: 'hat' },
+  { id: 'minimal', label: 'Minimal', ic: 'square' },
+  { id: 'sportivo', label: 'Sportivo', ic: 'activity' },
+  { id: 'streetwear', label: 'Streetwear', ic: 'cap' },
+  { id: 'business', label: 'Business', ic: 'briefcase' },
+  { id: 'boho', label: 'Boho', ic: 'flower' },
+  { id: 'vintage', label: 'Vintage', ic: 'radio' },
+  { id: 'romantico', label: 'Romantico', ic: 'heart' },
+  { id: 'rock', label: 'Rock', ic: 'zap' },
+  { id: 'preppy', label: 'Preppy', ic: 'grad' },
 ];
 
 const OCCASIONS = [
-  { id: 'lavoro', label: 'Lavoro', emoji: '💼' },
-  { id: 'università', label: 'Scuola / Università', emoji: '📚' },
-  { id: 'tempo libero', label: 'Tempo libero', emoji: '☕' },
-  { id: 'sport', label: 'Sport', emoji: '🏋️' },
-  { id: 'serata', label: 'Serate', emoji: '🍸' },
-  { id: 'cerimonia', label: 'Cerimonie & Eventi', emoji: '💍' },
-  { id: 'viaggio', label: 'Viaggi', emoji: '✈️' },
-  { id: 'appuntamento', label: 'Appuntamenti', emoji: '❤️' },
+  { id: 'lavoro', label: 'Lavoro', ic: 'briefcase' },
+  { id: 'università', label: 'Scuola / Università', ic: 'book' },
+  { id: 'tempo libero', label: 'Tempo libero', ic: 'coffee' },
+  { id: 'sport', label: 'Sport', ic: 'dumbbell' },
+  { id: 'serata', label: 'Serate', ic: 'glass' },
+  { id: 'cerimonia', label: 'Cerimonie & Eventi', ic: 'gem' },
+  { id: 'viaggio', label: 'Viaggi', ic: 'plane' },
+  { id: 'appuntamento', label: 'Appuntamenti', ic: 'heart' },
 ];
 
 const SIZES_TOP = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
@@ -310,14 +310,14 @@ function renderChips() {
   wrap.replaceChildren();
   const counts = {};
   for (const it of state.items) counts[it.category] = (counts[it.category] || 0) + 1;
-  const make = (id, label) => el('button', {
+  const make = (id, ...label) => el('button', {
     class: 'chip',
     'aria-pressed': String(state.category === id),
     onclick: () => { state.category = state.category === id && id ? '' : id; render(); },
-  }, label);
+  }, ...label);
   wrap.append(make('', `Tutto (${state.items.length})`));
   for (const c of CATEGORIES) {
-    if (counts[c.id]) wrap.append(make(c.id, `${c.emoji} ${catLabel(c)} (${counts[c.id]})`));
+    if (counts[c.id]) wrap.append(make(c.id, icon(c.ic), ` ${catLabel(c)} (${counts[c.id]})`));
   }
 }
 
@@ -328,8 +328,8 @@ function renderGrid() {
     const url = photoUrl(it);
     return el('button', { class: 'card', onclick: () => openDetail(it.id), 'aria-label': it.name },
       url ? el('img', { src: url, alt: '', loading: 'lazy', class: it.cutout ? 'cutout' : '' })
-          : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚'),
-      it.favorite ? el('span', { class: 'card-fav' }, '♥') : null,
+          : el('div', { class: 'noimg' }, icon(catById[it.category]?.ic || 'top')),
+      it.favorite ? el('span', { class: 'card-fav' }, icon('heart', 'filled')) : null,
       el('div', { class: 'card-body' },
         el('div', { class: 'card-name' }, it.name),
         el('div', { class: 'card-sub' }, swatch(it.color), catById[it.category] ? catLabel(catById[it.category]) : ''),
@@ -412,7 +412,7 @@ function fillCategorySelect(current) {
   const cats = visibleCategories();
   // Se un capo esistente ha una categoria nascosta, la mostriamo comunque
   if (current && !cats.some(c => c.id === current) && catById[current]) cats.push(catById[current]);
-  catSel.replaceChildren(...cats.map(c => el('option', { value: c.id }, `${c.emoji} ${catLabel(c)}`)));
+  catSel.replaceChildren(...cats.map(c => el('option', { value: c.id }, catLabel(c))));
 }
 
 function applyProfileSize() {
@@ -549,7 +549,7 @@ function renderDetail() {
   if (url) img.src = url;
 
   $('#detailName').textContent = it.name;
-  $('#detailFav').textContent = it.favorite ? '♥' : '♡';
+  $('#detailFav').replaceChildren(icon('heart', it.favorite ? 'filled' : ''));
   $('#detailFav').setAttribute('aria-pressed', String(!!it.favorite));
 
   const meta = [
@@ -683,7 +683,7 @@ function optionList(container, type, name, list, selected) {
   container.replaceChildren(...list.map(o => el('label', {},
     el('input', { type, name, value: o.id, checked: selected.includes(o.id) }),
     o.icon ? el('img', { class: 'opt-icon', src: o.icon, alt: '' })
-      : o.hex ? swatch(o.id) : el('span', { class: 'opt-emoji' }, o.emoji),
+      : o.hex ? swatch(o.id) : icon(o.ic, 'opt-ic'),
     o.label,
   )));
 }
@@ -1129,8 +1129,8 @@ function pieceEl(p, { lockable }) {
       renderCurrentOutfit();
     },
   },
-    url ? el('img', { src: url, alt: '', class: it.cutout ? 'cutout' : '' }) : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚'),
-    locked ? el('span', { class: 'piece-lock' }, '🔒') : null,
+    url ? el('img', { src: url, alt: '', class: it.cutout ? 'cutout' : '' }) : el('div', { class: 'noimg' }, icon(catById[it.category]?.ic || 'top')),
+    locked ? el('span', { class: 'piece-lock' }, icon('lock')) : null,
     el('div', { class: 'piece-body' },
       el('div', { class: 'piece-cat' }, SLOT_LABELS[p.slot] || ''),
       el('div', { class: 'piece-name' }, it.name),
@@ -1146,11 +1146,11 @@ function renderCurrentOutfit() {
   box.replaceChildren(el('div', { class: 'outfit' },
     el('div', { class: 'outfit-pieces' }, o.pieces.map(p => pieceEl(p, { lockable: true }))),
     el('p', { class: 'outfit-why' }, outfitReason(o)),
-    el('p', { class: 'outfit-hint' }, 'Tocca un capo per bloccarlo 🔒: resterà nel prossimo outfit.'),
+    el('p', { class: 'outfit-hint' }, 'Tocca un capo per bloccarlo: resterà nel prossimo outfit.'),
     el('div', { class: 'actions' },
-      el('button', { class: 'btn', onclick: onGenerate }, '🔄 Un altro'),
-      el('button', { class: 'btn', onclick: saveCurrentOutfit, disabled: saved }, saved ? '♥ Salvato' : '♡ Salva'),
-      el('button', { class: 'btn primary', onclick: () => wearOutfit(o) }, '✅ Indosso'),
+      el('button', { class: 'btn', onclick: onGenerate }, icon('refresh'), 'Un altro'),
+      el('button', { class: 'btn', onclick: saveCurrentOutfit, disabled: saved }, icon('heart', saved ? 'filled' : ''), saved ? 'Salvato' : 'Salva'),
+      el('button', { class: 'btn primary', onclick: () => wearOutfit(o) }, icon('check'), 'Indosso'),
     ),
   ));
 }
@@ -1208,7 +1208,7 @@ function renderSavedOutfits() {
     .filter(o => o.pieces.length)
     .sort((a, b) => b.createdAt - a.createdAt);
   if (!list.length) {
-    wrap.replaceChildren(el('p', { class: 'muted' }, 'Nessun outfit salvato. Genera un outfit e tocca ♡ Salva.'));
+    wrap.replaceChildren(el('p', { class: 'muted' }, 'Nessun outfit salvato. Genera un outfit e tocca Salva.'));
     return;
   }
   wrap.replaceChildren(el('div', { class: 'saved' }, list.map(o => el('div', { class: 'saved-row' },
@@ -1224,7 +1224,7 @@ function renderSavedOutfits() {
     }, o.pieces.map(p => {
       const it = state.items.find(i => i.id === p.id);
       const url = photoUrl(it);
-      return url ? el('img', { src: url, alt: it.name, class: it.cutout ? 'cutout' : '' }) : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚');
+      return url ? el('img', { src: url, alt: it.name, class: it.cutout ? 'cutout' : '' }) : el('div', { class: 'noimg' }, icon(catById[it.category]?.ic || 'top'));
     })),
     el('div', { class: 'saved-meta' },
       el('div', {}, o.occasion ? occasionById[o.occasion].label : ''),
@@ -1239,7 +1239,7 @@ function renderSavedOutfits() {
           renderSavedOutfits();
           renderCurrentOutfit();
         },
-      }, '🗑️'),
+      }, icon('trash')),
     ),
   ))));
 }
@@ -1251,7 +1251,7 @@ function fillOutfitControls() {
   const others = OCCASIONS.filter(o => !profile.occasions.includes(o.id));
   occ.replaceChildren(
     el('option', { value: '' }, 'Qualsiasi'),
-    ...[...mine, ...others].map(o => el('option', { value: o.id }, `${o.emoji} ${o.label}`)),
+    ...[...mine, ...others].map(o => el('option', { value: o.id }, o.label)),
   );
   occ.value = prev || mine[0]?.id || '';
 
@@ -1319,7 +1319,7 @@ function bindEvents() {
   $('#favFilter').addEventListener('click', e => {
     state.favOnly = !state.favOnly;
     e.currentTarget.setAttribute('aria-pressed', String(state.favOnly));
-    e.currentTarget.textContent = state.favOnly ? '♥' : '♡';
+    e.currentTarget.replaceChildren(icon('heart', state.favOnly ? 'filled' : ''));
     renderGrid();
   });
 
@@ -1342,6 +1342,7 @@ function bindEvents() {
 }
 
 async function init() {
+  hydrateIcons();
   fillSelects();
   bindEvents();
   bindProfileEvents();

@@ -26,7 +26,7 @@
           <p id="greeting" class="greeting" hidden></p>
         </div>
       </div>
-      <button id="menuBtn" class="icon-btn" aria-label="Menu">⋯</button>
+      <button id="menuBtn" class="icon-btn" aria-label="Menu"><i data-icon="more"></i></button>
     </div>
     <div id="wardrobeTools">
     <input id="search" type="search" placeholder="Cerca per nome, marca, tag…" autocomplete="off">
@@ -40,7 +40,7 @@
         <option value="worn">Più indossati</option>
         <option value="least">Meno indossati</option>
       </select>
-      <button id="favFilter" class="toggle" aria-pressed="false" title="Solo preferiti">♡</button>
+      <button id="favFilter" class="toggle" aria-pressed="false" title="Solo preferiti" aria-label="Solo preferiti"><i data-icon="heart"></i></button>
     </div>
     </div>
   </header>
@@ -65,7 +65,7 @@
           <select id="seasonSel"></select>
         </label>
       </div>
-      <button id="generateBtn" class="btn primary wide">✨ Genera outfit</button>
+      <button id="generateBtn" class="btn primary wide"><i data-icon="sparkles"></i> Genera outfit</button>
       <div id="outfitResult" aria-live="polite"></div>
       <h2 class="spaced">Outfit salvati</h2>
       <div id="savedOutfits"></div>
@@ -89,12 +89,12 @@
       <h2 id="itemDialogTitle">Nuovo capo</h2>
       <label class="photo-picker">
         <img id="photoPreview" alt="" hidden>
-        <span id="photoPlaceholder">📷 Scatta o scegli una foto</span>
+        <span id="photoPlaceholder" class="placeholder"><i data-icon="camera" class="big"></i>Scatta o scegli una foto</span>
         <input id="photoInput" type="file" accept="image/*">
       </label>
       <div id="bgTools" class="bg-tools" hidden>
-        <button type="button" id="bgRemoveBtn" class="btn small">✂️ Rimuovi sfondo</button>
-        <button type="button" id="bgRestoreBtn" class="btn small ghost" hidden>↩️ Foto originale</button>
+        <button type="button" id="bgRemoveBtn" class="btn small"><i data-icon="scissors"></i> Rimuovi sfondo</button>
+        <button type="button" id="bgRestoreBtn" class="btn small ghost" hidden><i data-icon="undo"></i> Foto originale</button>
       </div>
       <p id="bgStatus" class="bg-status" hidden></p>
       <label>Nome
@@ -141,7 +141,7 @@
       <div class="detail-body">
         <div class="detail-head">
           <h2 id="detailName"></h2>
-          <button id="detailFav" class="icon-btn fav" aria-label="Preferito">♡</button>
+          <button id="detailFav" class="icon-btn fav" aria-label="Preferito"><i data-icon="heart"></i></button>
         </div>
         <p id="detailMeta" class="muted"></p>
         <p id="detailTags"></p>
@@ -184,13 +184,13 @@
     <h2>Profilo</h2>
     <p id="profileSummary" class="muted"></p>
     <div class="menu-list">
-      <button id="editProfileBtn" class="btn">👤 Modifica profilo</button>
+      <button id="editProfileBtn" class="btn"><i data-icon="user"></i> Modifica profilo</button>
     </div>
     <h2 class="spaced">Backup</h2>
     <p class="muted">I tuoi capi sono salvati solo su questo dispositivo. Esporta un backup ogni tanto per non perderli, o per spostarli su un altro telefono.</p>
     <div class="menu-list">
-      <button id="exportBtn" class="btn">⬇️ Esporta backup</button>
-      <label class="btn">⬆️ Importa backup
+      <button id="exportBtn" class="btn"><i data-icon="download"></i> Esporta backup</button>
+      <label class="btn"><i data-icon="upload"></i> Importa backup
         <input id="importInput" type="file" accept="application/json,.json" hidden>
       </label>
     </div>
@@ -205,9 +205,9 @@
       <div class="progress" id="wizProgress"></div>
 
       <section class="step" data-step="0">
-        <div class="step-emoji">👋</div>
+        <img class="empty-icon step-icon" src="icon.svg" alt="">
         <h2>Benvenuto nel tuo armadio</h2>
-        <p class="muted">Rispondi a qualche domanda per personalizzare l'app. Puoi cambiare tutto quando vuoi dal menu ⋯.</p>
+        <p class="muted">Rispondi a qualche domanda per personalizzare l'app. Puoi cambiare tutto quando vuoi dal menu in alto a destra.</p>
         <label>Come ti chiami?
           <input name="name" maxlength="30" placeholder="facoltativo" autocomplete="given-name">
         </label>
@@ -261,6 +261,7 @@
 
   <div id="toast" class="toast" role="status" hidden></div>
 
+  <script src="icons.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

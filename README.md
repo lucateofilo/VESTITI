@@ -31,3 +31,4 @@ poi apri http://localhost:8000
 ## Rimozione sfondo
 Usa [@imgly/background-removal](https://github.com/imgly/background-removal-js) (licenza AGPL-3.0), incluso in `vendor/`.
 La prima volta scarica il modello (~100 MB) da staticimgly.com, poi resta in cache. Le foto non lasciano mai il dispositivo.
+- Icone SVG in stile [Lucide](https://lucide.dev) (licenza ISC), in `icons.js`.

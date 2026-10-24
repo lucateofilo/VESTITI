@@ -395,3 +395,27 @@ img.cutout { object-fit: contain !important; padding: 8%; background: var(--surf
 }
 .compare .checker img { background: transparent; }
 .compare figcaption { text-align: center; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+/* ---------- Icone SVG ---------- */
+svg.i {
+  width: 1.2em; height: 1.2em; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.6;
+  stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: -0.22em;
+}
+svg.i.filled { fill: currentColor; }
+.icon-btn { display: inline-grid; place-items: center; color: var(--text); }
+.icon-btn svg.i { width: 24px; height: 24px; }
+.fav { color: var(--accent); }
+.toggle { display: grid; place-items: center; }
+.toggle svg.i { width: 18px; height: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; }
+.chip svg.i { width: 16px; height: 16px; }
+.placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.placeholder svg.big { width: 34px; height: 34px; stroke-width: 1.3; }
+.noimg { color: var(--muted); }
+.noimg svg.i { width: 38%; height: auto; stroke-width: 1.2; }
+.card-fav svg.i, .piece-lock svg.i { width: 14px; height: 14px; }
+.options svg.opt-ic { width: 22px; height: 22px; color: var(--accent); }
+.step-icon { width: 64px; height: 64px; border-radius: 16px; margin: 4px 0 12px; }
+.saved-meta .btn svg.i { width: 18px; height: 18px; }
