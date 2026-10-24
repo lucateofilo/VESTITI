@@ -5,11 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Il mio Armadio</title>
   <meta name="description" content="Armadio digitale: fotografa e organizza i tuoi vestiti.">
-  <meta name="theme-color" content="#1f1b24">
+  <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1726" media="(prefers-color-scheme: dark)">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" id="favicon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" id="touchIcon" href="icon.svg">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -71,8 +75,12 @@
   <button id="addBtn" class="fab" aria-label="Aggiungi capo">+</button>
 
   <nav class="tabbar" aria-label="Sezioni">
-    <button class="tab" data-view="wardrobe" aria-current="page"><span>🗂️</span>Armadio</button>
-    <button class="tab" data-view="outfit"><span>✨</span>Outfit</button>
+    <button class="tab" data-view="wardrobe" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5a2 2 0 1 1 2-2c0 .9-.6 1.3-1.2 1.7-.5.3-.8.7-.8 1.3v.5l8.2 4.7c.9.5.5 1.8-.5 1.8H4.3c-1 0-1.4-1.3-.5-1.8L12 9"/></svg>
+      Armadio</button>
+    <button class="tab" data-view="outfit">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>
+      Outfit</button>
   </nav>
 
   <!-- Aggiungi / modifica capo -->
