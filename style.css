@@ -376,3 +376,22 @@ body { padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
 .saved-meta { font-size: 0.8rem; color: var(--muted); text-align: right; flex: none; }
 .saved-meta .btn { margin-top: 4px; }
 .options .opt-icon { width: 44px; height: 44px; border-radius: 12px; }
+
+/* ---------- Rimozione sfondo ---------- */
+.bg-tools { display: flex; gap: 8px; margin: -6px 0 12px; flex-wrap: wrap; }
+.bg-status { font-size: 0.85rem; color: var(--muted); margin: -4px 0 12px; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+img.cutout { object-fit: contain !important; padding: 8%; background: var(--surface) !important; }
+.photo-picker img.cutout { padding: 4%; }
+.detail img.cutout { padding: 24px; }
+
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.compare figure { margin: 0; }
+.compare img { width: 100%; aspect-ratio: 3 / 4; object-fit: contain; border-radius: 12px; background: var(--bg); display: block; }
+.compare .checker {
+  border-radius: 12px; overflow: hidden;
+  background: repeating-conic-gradient(#e2e5ea 0 25%, #ffffff 0 50%) 0 0 / 16px 16px;
+}
+.compare .checker img { background: transparent; }
+.compare figcaption { text-align: center; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }

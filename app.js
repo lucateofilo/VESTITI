@@ -327,7 +327,7 @@ function renderGrid() {
   grid.replaceChildren(...list.map(it => {
     const url = photoUrl(it);
     return el('button', { class: 'card', onclick: () => openDetail(it.id), 'aria-label': it.name },
-      url ? el('img', { src: url, alt: '', loading: 'lazy' })
+      url ? el('img', { src: url, alt: '', loading: 'lazy', class: it.cutout ? 'cutout' : '' })
           : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚'),
       it.favorite ? el('span', { class: 'card-fav' }, '♥') : null,
       el('div', { class: 'card-body' },
@@ -446,6 +446,9 @@ function openForm(item = null) {
   form.reset();
   state.editingId = item ? item.id : null;
   state.pendingPhoto = undefined;
+  state.pendingOriginal = undefined;
+  bgJob++; // annulla eventuali rimozioni sfondo in corso
+  setBgStatus('');
   if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
   autoSize = '';
   fillCategorySelect(item?.category);
@@ -467,6 +470,7 @@ function openForm(item = null) {
     setPhotoPreview(null);
   }
   renderTagSuggestions();
+  renderBgTools();
   $('#itemDialog').showModal();
 }
 
@@ -476,10 +480,11 @@ async function onPhotoChosen(e) {
   if (!file) return;
   try {
     const blob = await compressImage(file);
+    bgJob++;
+    setBgStatus('');
     state.pendingPhoto = blob;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = URL.createObjectURL(blob);
-    setPhotoPreview(previewUrl);
+    state.pendingOriginal = null; // foto nuova: nessun originale da ripristinare
+    showFormPhoto(blob);
   } catch (err) {
     console.error(err);
     toast('Impossibile leggere questa foto');
@@ -502,6 +507,11 @@ async function onSubmit(e) {
     notes: form.notes.value.trim(),
   };
   if (state.pendingPhoto !== undefined) item.photo = state.pendingPhoto;
+  if (state.pendingOriginal !== undefined) {
+    if (state.pendingOriginal) item.photoOriginal = state.pendingOriginal;
+    else delete item.photoOriginal;
+  }
+  item.cutout = !!item.photoOriginal;
   if (!item.name) return;
 
   try {
@@ -511,8 +521,10 @@ async function onSubmit(e) {
     toast('Errore nel salvataggio (memoria piena?)');
     return;
   }
-  if (existing) Object.assign(existing, item);
-  else state.items.push(item);
+  if (existing) {
+    if (!item.photoOriginal) delete existing.photoOriginal;
+    Object.assign(existing, item);
+  } else state.items.push(item);
 
   $('#itemDialog').close();
   render();
@@ -533,6 +545,7 @@ function renderDetail() {
   const url = photoUrl(it);
   const img = $('#detailImg');
   img.hidden = !url;
+  img.classList.toggle('cutout', !!it.cutout);
   if (url) img.src = url;
 
   $('#detailName').textContent = it.name;
@@ -584,8 +597,12 @@ async function deleteCurrent() {
 // ---------- Backup ----------
 async function exportBackup() {
   const items = await Promise.all(state.items.map(async it => {
-    const { photo, ...rest } = it;
-    return { ...rest, photo: photo ? await blobToDataUrl(photo) : null };
+    const { photo, photoOriginal, ...rest } = it;
+    return {
+      ...rest,
+      photo: photo ? await blobToDataUrl(photo) : null,
+      photoOriginal: photoOriginal ? await blobToDataUrl(photoOriginal) : null,
+    };
   }));
   const data = { app: 'armadio', version: 1, exportedAt: new Date().toISOString(), profile, items, outfits: state.outfits };
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
@@ -627,7 +644,11 @@ async function importBackup(e) {
       };
       if (typeof raw.photo === 'string' && raw.photo.startsWith('data:image/')) {
         item.photo = await dataUrlToBlob(raw.photo);
+        if (typeof raw.photoOriginal === 'string' && raw.photoOriginal.startsWith('data:image/')) {
+          item.photoOriginal = await dataUrlToBlob(raw.photoOriginal);
+        }
       }
+      item.cutout = !!item.photoOriginal;
       await db.put(item);
       added++;
     }
@@ -772,6 +793,164 @@ function bindProfileEvents() {
   $('#menuBtn').addEventListener('click', renderProfileSummary);
   $('#itemForm').category.addEventListener('change', applyProfileSize);
   $('#itemForm').tags.addEventListener('input', renderTagSuggestions);
+}
+
+// ---------- Rimozione sfondo (sul dispositivo, con approvazione) ----------
+// La libreria e il modello si scaricano solo al primo uso (~100 MB, poi restano in cache).
+const BG_MODEL_URL = 'https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/';
+let bgLib = null;
+let bgJob = 0;          // incrementato per annullare un lavoro in corso
+let bgResult = null;    // { source, cut, original } in attesa di approvazione
+
+function editingItem() {
+  return state.items.find(i => i.id === state.editingId) || null;
+}
+
+// Foto attualmente mostrata nel form e relativo originale
+function formPhoto() {
+  return state.pendingPhoto !== undefined ? state.pendingPhoto : editingItem()?.photo || null;
+}
+function formOriginal() {
+  return state.pendingOriginal !== undefined ? state.pendingOriginal : editingItem()?.photoOriginal || null;
+}
+
+function showFormPhoto(blob) {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = blob ? URL.createObjectURL(blob) : null;
+  setPhotoPreview(previewUrl);
+  renderBgTools();
+}
+
+function renderBgTools() {
+  const hasPhoto = !!formPhoto();
+  $('#bgTools').hidden = !hasPhoto;
+  $('#bgRestoreBtn').hidden = !formOriginal();
+  $('#photoPreview').classList.toggle('cutout', !!formOriginal());
+}
+
+function setBgStatus(text) {
+  const s = $('#bgStatus');
+  s.hidden = !text;
+  s.textContent = text;
+  $('#bgRemoveBtn').disabled = !!text;
+}
+
+// Ritaglia lo spazio vuoto attorno al capo e salva in WebP (o PNG) mantenendo la trasparenza
+async function trimTransparent(blob, maxSide = 1000) {
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement('canvas');
+  c.width = bmp.width;
+  c.height = bmp.height;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(bmp, 0, 0);
+  const { data, width, height } = ctx.getImageData(0, 0, c.width, c.height);
+  let minX = width, minY = height, maxX = -1, maxY = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] > 16) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return null; // non è rimasto niente: risultato inutilizzabile
+  const pad = Math.round(Math.max(maxX - minX, maxY - minY) * 0.04);
+  minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+  maxX = Math.min(width - 1, maxX + pad); maxY = Math.min(height - 1, maxY + pad);
+  const w = maxX - minX + 1, h = maxY - minY + 1;
+  const scale = Math.min(1, maxSide / Math.max(w, h));
+  const out = document.createElement('canvas');
+  out.width = Math.round(w * scale);
+  out.height = Math.round(h * scale);
+  out.getContext('2d').drawImage(c, minX, minY, w, h, 0, 0, out.width, out.height);
+  const webp = await new Promise(r => out.toBlob(r, 'image/webp', 0.9));
+  if (webp && webp.type === 'image/webp') return webp;
+  return new Promise(r => out.toBlob(r, 'image/png'));
+}
+
+async function onRemoveBackground() {
+  const source = formPhoto();
+  if (!source) return;
+  const original = formOriginal() || source; // se è già scontornata, si riparte dall'originale
+  const job = ++bgJob;
+  setBgStatus('Preparo la rimozione dello sfondo…');
+  try {
+    if (!bgLib) bgLib = await import(window.BG_LIB_URL || './vendor/bg-removal.js');
+    let lastPct = -1;
+    const cut = await bgLib.removeBackground(original, {
+      publicPath: window.BG_PUBLIC_PATH || BG_MODEL_URL,
+      model: 'medium',
+      output: { format: 'image/png' },
+      progress: (key, current, total) => {
+        if (job !== bgJob || !key.startsWith('fetch')) return;
+        const pct = total ? Math.floor((current / total) * 100) : 0;
+        if (pct !== lastPct) {
+          lastPct = pct;
+          setBgStatus(`Scarico il modello (solo la prima volta, meglio con Wi‑Fi)… ${pct}%`);
+        }
+      },
+    });
+    if (job !== bgJob) return; // l'utente ha cambiato foto o chiuso il form
+    setBgStatus('Rifinisco…');
+    const trimmed = await trimTransparent(cut);
+    if (job !== bgJob) return;
+    setBgStatus('');
+    if (!trimmed) {
+      toast('Non ho trovato il capo nella foto: tengo l\'originale');
+      return;
+    }
+    bgResult = { cut: trimmed, original };
+    openBgReview();
+  } catch (err) {
+    console.error(err);
+    if (job !== bgJob) return;
+    setBgStatus('');
+    toast(navigator.onLine === false
+      ? 'Serve la connessione per scaricare il modello la prima volta'
+      : 'Non è stato possibile rimuovere lo sfondo');
+  }
+}
+
+let reviewUrls = [];
+function openBgReview() {
+  reviewUrls.forEach(u => URL.revokeObjectURL(u));
+  reviewUrls = [URL.createObjectURL(bgResult.original), URL.createObjectURL(bgResult.cut)];
+  $('#bgBefore').src = reviewUrls[0];
+  $('#bgAfter').src = reviewUrls[1];
+  $('#bgReviewDialog').showModal();
+}
+
+function closeBgReview(accept) {
+  if (accept && bgResult) {
+    state.pendingPhoto = bgResult.cut;
+    state.pendingOriginal = bgResult.original;
+    showFormPhoto(bgResult.cut);
+    toast('Sfondo rimosso. Tocca Salva per confermare.');
+  }
+  bgResult = null;
+  $('#bgReviewDialog').close();
+}
+
+function onRestoreOriginal() {
+  const original = formOriginal();
+  if (!original) return;
+  bgJob++;
+  setBgStatus('');
+  state.pendingPhoto = original;
+  state.pendingOriginal = null;
+  showFormPhoto(original);
+}
+
+function bindBgEvents() {
+  $('#bgRemoveBtn').addEventListener('click', onRemoveBackground);
+  $('#bgRestoreBtn').addEventListener('click', onRestoreOriginal);
+  $('#bgAccept').addEventListener('click', () => closeBgReview(true));
+  $('#bgReject').addEventListener('click', () => closeBgReview(false));
+  // Chiudere il controllo in qualsiasi altro modo equivale a "Tieni originale"
+  $('#bgReviewDialog').addEventListener('close', () => { bgResult = null; });
+  $('#itemDialog').addEventListener('close', () => { bgJob++; setBgStatus(''); });
 }
 
 // ---------- Generatore di outfit ----------
@@ -950,7 +1129,7 @@ function pieceEl(p, { lockable }) {
       renderCurrentOutfit();
     },
   },
-    url ? el('img', { src: url, alt: '' }) : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚'),
+    url ? el('img', { src: url, alt: '', class: it.cutout ? 'cutout' : '' }) : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚'),
     locked ? el('span', { class: 'piece-lock' }, '🔒') : null,
     el('div', { class: 'piece-body' },
       el('div', { class: 'piece-cat' }, SLOT_LABELS[p.slot] || ''),
@@ -1045,7 +1224,7 @@ function renderSavedOutfits() {
     }, o.pieces.map(p => {
       const it = state.items.find(i => i.id === p.id);
       const url = photoUrl(it);
-      return url ? el('img', { src: url, alt: it.name }) : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚');
+      return url ? el('img', { src: url, alt: it.name, class: it.cutout ? 'cutout' : '' }) : el('div', { class: 'noimg' }, catById[it.category]?.emoji || '👚');
     })),
     el('div', { class: 'saved-meta' },
       el('div', {}, o.occasion ? occasionById[o.occasion].label : ''),
@@ -1167,6 +1346,7 @@ async function init() {
   bindEvents();
   bindProfileEvents();
   bindOutfitEvents();
+  bindBgEvents();
   try {
     state.items = await db.all();
     state.outfits = await db.allOutfits();

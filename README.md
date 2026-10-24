@@ -5,6 +5,7 @@ Armadio digitale ispirato ad Atricent: fotografa i tuoi vestiti e tienili organi
 
 ## Cosa fa
 - Aggiungi capi con foto (fotocamera o galleria), nome, categoria, colore, stagioni, marca, taglia, tag e note
+- **Rimuovi sfondo** dalle foto, direttamente sul telefono (nessun server): il risultato va sempre approvato a mano, e la foto originale si può ripristinare
 - Filtri per categoria, colore, stagione, preferiti e ricerca testuale
 - Conta quante volte indossi ogni capo ("Indossato oggi")
 - Backup: esporta/importa tutto in un file JSON
@@ -26,3 +27,7 @@ Sul telefono: apri il link e scegli **Aggiungi a schermata Home** per averla com
 python3 -m http.server 8000
 ```
 poi apri http://localhost:8000
+
+## Rimozione sfondo
+Usa [@imgly/background-removal](https://github.com/imgly/background-removal-js) (licenza AGPL-3.0), incluso in `vendor/`.
+La prima volta scarica il modello (~100 MB) da staticimgly.com, poi resta in cache. Le foto non lasciano mai il dispositivo.

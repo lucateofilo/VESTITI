@@ -92,6 +92,11 @@
         <span id="photoPlaceholder">📷 Scatta o scegli una foto</span>
         <input id="photoInput" type="file" accept="image/*">
       </label>
+      <div id="bgTools" class="bg-tools" hidden>
+        <button type="button" id="bgRemoveBtn" class="btn small">✂️ Rimuovi sfondo</button>
+        <button type="button" id="bgRestoreBtn" class="btn small ghost" hidden>↩️ Foto originale</button>
+      </div>
+      <p id="bgStatus" class="bg-status" hidden></p>
       <label>Nome
         <input name="name" required maxlength="60" placeholder="es. Camicia di lino bianca">
       </label>
@@ -151,6 +156,26 @@
           <button class="btn primary" data-close>Chiudi</button>
         </div>
       </div>
+    </div>
+  </dialog>
+
+  <!-- Controllo rimozione sfondo: decide sempre l'utente -->
+  <dialog id="bgReviewDialog">
+    <h2>Controlla il risultato</h2>
+    <p class="muted">La rimozione automatica può sbagliare. Se il capo è tagliato male o è rimasto dello sfondo, tieni la foto originale.</p>
+    <div class="compare">
+      <figure>
+        <img id="bgBefore" alt="Foto originale">
+        <figcaption>Prima</figcaption>
+      </figure>
+      <figure>
+        <div class="checker"><img id="bgAfter" alt="Foto senza sfondo"></div>
+        <figcaption>Senza sfondo</figcaption>
+      </figure>
+    </div>
+    <div class="actions">
+      <button type="button" id="bgReject" class="btn ghost">Tieni originale</button>
+      <button type="button" id="bgAccept" class="btn primary">Usa senza sfondo</button>
     </div>
   </dialog>
 
