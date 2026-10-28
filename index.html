@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Il mio Armadio</title>
+  <meta name="description" content="Armadio digitale: fotografa e organizza i tuoi vestiti.">
+  <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1726" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" id="favicon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" id="touchIcon" href="icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <img id="logo" class="logo" src="icon.svg" alt="">
+        <div>
+          <h1 id="pageTitle">Il mio Armadio</h1>
+          <p id="greeting" class="greeting" hidden></p>
+        </div>
+      </div>
+      <button id="menuBtn" class="icon-btn" aria-label="Menu"><i data-icon="more"></i></button>
+    </div>
+    <div id="wardrobeTools">
+    <input id="search" type="search" placeholder="Cerca per nome, marca, tag…" autocomplete="off">
+    <nav id="categoryChips" class="chips" aria-label="Categorie"></nav>
+    <div class="filters">
+      <select id="colorFilter" aria-label="Colore"><option value="">Tutti i colori</option></select>
+      <select id="seasonFilter" aria-label="Stagione"><option value="">Tutte le stagioni</option></select>
+      <select id="sortBy" aria-label="Ordina">
+        <option value="new">Più recenti</option>
+        <option value="name">Nome A–Z</option>
+        <option value="worn">Più indossati</option>
+        <option value="least">Meno indossati</option>
+      </select>
+      <button id="favFilter" class="toggle" aria-pressed="false" title="Solo preferiti" aria-label="Solo preferiti"><i data-icon="heart"></i></button>
+    </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="wardrobeView">
+      <p id="stats" class="stats"></p>
+      <section id="grid" class="grid" aria-live="polite"></section>
+      <div id="empty" class="empty" hidden>
+        <img class="empty-icon" src="icon.svg" alt="">
+        <p>Il tuo armadio è vuoto.</p>
+        <p class="muted">Tocca <strong>+</strong> per aggiungere il primo capo.</p>
+      </div>
+    </div>
+
+    <div id="outfitView" hidden>
+      <div class="outfit-controls">
+        <label>Occasione
+          <select id="occasionSel"></select>
+        </label>
+        <label>Stagione
+          <select id="seasonSel"></select>
+        </label>
+      </div>
+      <button id="generateBtn" class="btn primary wide"><i data-icon="sparkles"></i> Genera outfit</button>
+      <div id="outfitResult" aria-live="polite"></div>
+      <h2 class="spaced">Outfit salvati</h2>
+      <div id="savedOutfits"></div>
+    </div>
+  </main>
+
+  <button id="addBtn" class="fab" aria-label="Aggiungi capo">+</button>
+
+  <nav class="tabbar" aria-label="Sezioni">
+    <button class="tab" data-view="wardrobe" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5a2 2 0 1 1 2-2c0 .9-.6 1.3-1.2 1.7-.5.3-.8.7-.8 1.3v.5l8.2 4.7c.9.5.5 1.8-.5 1.8H4.3c-1 0-1.4-1.3-.5-1.8L12 9"/></svg>
+      Armadio</button>
+    <button class="tab" data-view="outfit">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>
+      Outfit</button>
+  </nav>
+
+  <!-- Aggiungi / modifica capo -->
+  <dialog id="itemDialog">
+    <form id="itemForm" method="dialog">
+      <h2 id="itemDialogTitle">Nuovo capo</h2>
+      <label class="photo-picker">
+        <img id="photoPreview" alt="" hidden>
+        <span id="photoPlaceholder" class="placeholder"><i data-icon="camera" class="big"></i>Scatta o scegli una foto</span>
+        <input id="photoInput" type="file" accept="image/*">
+      </label>
+      <div id="bgTools" class="bg-tools" hidden>
+        <button type="button" id="bgRemoveBtn" class="btn small"><i data-icon="scissors"></i> Rimuovi sfondo</button>
+        <button type="button" id="bgRestoreBtn" class="btn small ghost" hidden><i data-icon="undo"></i> Foto originale</button>
+      </div>
+      <p id="bgStatus" class="bg-status" hidden></p>
+      <label>Nome
+        <input name="name" required maxlength="60" placeholder="es. Camicia di lino bianca">
+      </label>
+      <div class="row">
+        <label>Categoria
+          <select name="category" id="categorySelect" required></select>
+        </label>
+        <label>Colore
+          <select name="color" id="colorSelect"></select>
+        </label>
+      </div>
+      <fieldset>
+        <legend>Stagioni</legend>
+        <div id="seasonChecks" class="checks"></div>
+      </fieldset>
+      <div class="row">
+        <label>Marca
+          <input name="brand" maxlength="40" placeholder="facoltativo">
+        </label>
+        <label>Taglia
+          <input name="size" maxlength="10" placeholder="facoltativo">
+        </label>
+      </div>
+      <label>Tag
+        <input name="tags" maxlength="100" placeholder="es. ufficio, elegante, sport">
+      </label>
+      <div id="tagSuggestions" class="suggest"></div>
+      <label>Note
+        <textarea name="notes" rows="2" maxlength="300"></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="btn ghost" data-close>Annulla</button>
+        <button type="submit" class="btn primary">Salva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dettaglio capo -->
+  <dialog id="detailDialog">
+    <div class="detail">
+      <img id="detailImg" alt="">
+      <div class="detail-body">
+        <div class="detail-head">
+          <h2 id="detailName"></h2>
+          <button id="detailFav" class="icon-btn fav" aria-label="Preferito"><i data-icon="heart"></i></button>
+        </div>
+        <p id="detailMeta" class="muted"></p>
+        <p id="detailTags"></p>
+        <p id="detailNotes" class="notes"></p>
+        <div class="wear">
+          <span id="detailWears"></span>
+          <button id="wearBtn" class="btn small">Indossato oggi</button>
+        </div>
+        <div class="actions">
+          <button id="deleteBtn" class="btn danger">Elimina</button>
+          <button id="editBtn" class="btn ghost">Modifica</button>
+          <button class="btn primary" data-close>Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Controllo rimozione sfondo: decide sempre l'utente -->
+  <dialog id="bgReviewDialog">
+    <h2>Controlla il risultato</h2>
+    <p class="muted">La rimozione automatica può sbagliare. Se il capo è tagliato male o è rimasto dello sfondo, tieni la foto originale.</p>
+    <div class="compare">
+      <figure>
+        <img id="bgBefore" alt="Foto originale">
+        <figcaption>Prima</figcaption>
+      </figure>
+      <figure>
+        <div class="checker"><img id="bgAfter" alt="Foto senza sfondo"></div>
+        <figcaption>Senza sfondo</figcaption>
+      </figure>
+    </div>
+    <div class="actions">
+      <button type="button" id="bgReject" class="btn ghost">Tieni originale</button>
+      <button type="button" id="bgAccept" class="btn primary">Usa senza sfondo</button>
+    </div>
+  </dialog>
+
+  <!-- Menu -->
+  <dialog id="menuDialog">
+    <h2>Profilo</h2>
+    <p id="profileSummary" class="muted"></p>
+    <div class="menu-list">
+      <button id="editProfileBtn" class="btn"><i data-icon="user"></i> Modifica profilo</button>
+    </div>
+    <h2 class="spaced">Backup</h2>
+    <p class="muted">I tuoi capi sono salvati solo su questo dispositivo. Esporta un backup ogni tanto per non perderli, o per spostarli su un altro telefono.</p>
+    <div class="menu-list">
+      <button id="exportBtn" class="btn"><i data-icon="download"></i> Esporta backup</button>
+      <label class="btn"><i data-icon="upload"></i> Importa backup
+        <input id="importInput" type="file" accept="application/json,.json" hidden>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn primary" data-close>Chiudi</button>
+    </div>
+  </dialog>
+
+  <!-- Profilo / configurazione iniziale -->
+  <dialog id="profileDialog" class="wizard">
+    <form id="profileForm" method="dialog">
+      <div class="progress" id="wizProgress"></div>
+
+      <section class="step" data-step="0">
+        <img class="empty-icon step-icon" src="icon.svg" alt="">
+        <h2>Benvenuto nel tuo armadio</h2>
+        <p class="muted">Rispondi a qualche domanda per personalizzare l'app. Puoi cambiare tutto quando vuoi dal menu in alto a destra.</p>
+        <label>Come ti chiami?
+          <input name="name" maxlength="30" placeholder="facoltativo" autocomplete="given-name">
+        </label>
+      </section>
+
+      <section class="step" data-step="1">
+        <h2>Per chi è questo armadio?</h2>
+        <p class="muted">Adattiamo categorie, taglie e outfit. L'icona scelta diventa l'icona della tua app.</p>
+        <div class="options big" id="genderOptions"></div>
+      </section>
+
+      <section class="step" data-step="2">
+        <h2>Che stile ti piace?</h2>
+        <p class="muted">Scegline quanti vuoi.</p>
+        <div class="options" id="styleOptions"></div>
+      </section>
+
+      <section class="step" data-step="3">
+        <h2>I tuoi colori preferiti</h2>
+        <p class="muted">Scegline quanti vuoi.</p>
+        <div class="options" id="favColorOptions"></div>
+      </section>
+
+      <section class="step" data-step="4">
+        <h2>Per quali occasioni ti vesti?</h2>
+        <p class="muted">Scegline quante vuoi.</p>
+        <div class="options" id="occasionOptions"></div>
+      </section>
+
+      <section class="step" data-step="5">
+        <h2>Le tue taglie</h2>
+        <p class="muted">Le useremo per compilare la taglia quando aggiungi un capo.</p>
+        <label>Taglia sopra (magliette, camicie, giacche)
+          <select name="sizeTop" id="sizeTop"></select>
+        </label>
+        <label>Taglia pantaloni
+          <select name="sizeBottom" id="sizeBottom"></select>
+        </label>
+        <label>Numero di scarpe
+          <select name="sizeShoes" id="sizeShoes"></select>
+        </label>
+      </section>
+
+      <div class="actions wiz-actions">
+        <button type="button" id="wizBack" class="btn ghost">Indietro</button>
+        <button type="button" id="wizSkip" class="btn ghost">Salta</button>
+        <button type="submit" id="wizNext" class="btn primary">Avanti</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="icons.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
